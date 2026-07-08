@@ -80,8 +80,17 @@ local function GetAuraCandidateFilters(AuraDB, auraType, typed, spellIDs)
 	return candidateFilters
 end
 
-local function HasSpellIDs(AuraDB)
-	return AuraDB.SpellIDs and next(AuraDB.SpellIDs) ~= nil
+local function GetSpellIDFilters(AurasDB, auraDB)
+	local configuredSpellIDs = AurasDB.SpellIDFilters
+	if not configuredSpellIDs then return end
+	local spellIDs
+	for spellID, auraDestinations in pairs(configuredSpellIDs) do
+		if type(auraDestinations) == "table" and auraDestinations[auraDB] then
+			spellIDs = spellIDs or {}
+			spellIDs[spellID] = true
+		end
+	end
+	return spellIDs
 end
 
 local function StyleAuras(_, button, unit, auraType, _, auraDB)
@@ -328,8 +337,9 @@ function UUF:UpdateUnitAuras(unitFrame, unit)
 	local rows = math.max(math.ceil((BuffsDB.Num or 0) / perRow), 1)
 	local sortMethod, sortDirection = GetAuraSorting(BuffsDB.Sorting)
 	local buffCandidateFilters = GetAuraCandidateFilters(BuffsDB, "HELPFUL")
-	local hasBuffSpellIDs = HasSpellIDs(BuffsDB) and not BuffsDB.OnlyShowPlayer
-	local buffSpellIDCandidateFilters = hasBuffSpellIDs and GetAuraCandidateFilters(BuffsDB, "HELPFUL", nil, BuffsDB.SpellIDs) or nil
+	local buffSpellIDs = not BuffsDB.OnlyShowPlayer and GetSpellIDFilters(AurasDB, "Buffs") or nil
+	local hasBuffSpellIDs = buffSpellIDs ~= nil
+	local buffSpellIDCandidateFilters = hasBuffSpellIDs and GetAuraCandidateFilters(BuffsDB, "HELPFUL", nil, buffSpellIDs) or nil
 	local buffLayout = { elementSpacingX = spacing, elementSpacingY = spacing, elementWidth = BuffsDB.Size, elementHeight = BuffsDB.Size }
 	local hasBuffFilters = hasBuffSpellIDs
 	if BuffsDB.Filters and not BuffsDB.OnlyShowPlayer then
@@ -371,8 +381,9 @@ function UUF:UpdateUnitAuras(unitFrame, unit)
 	sortMethod, sortDirection = GetAuraSorting(DebuffsDB.Sorting)
 	local debuffCandidateFilters = GetAuraCandidateFilters(DebuffsDB, "HARMFUL")
 	local typedDebuffCandidateFilters = GetAuraCandidateFilters(DebuffsDB, "HARMFUL", true)
-	local hasDebuffSpellIDs = HasSpellIDs(DebuffsDB) and not DebuffsDB.OnlyShowPlayer
-	local debuffSpellIDCandidateFilters = hasDebuffSpellIDs and GetAuraCandidateFilters(DebuffsDB, "HARMFUL", nil, DebuffsDB.SpellIDs) or nil
+	local debuffSpellIDs = not DebuffsDB.OnlyShowPlayer and GetSpellIDFilters(AurasDB, "Debuffs") or nil
+	local hasDebuffSpellIDs = debuffSpellIDs ~= nil
+	local debuffSpellIDCandidateFilters = hasDebuffSpellIDs and GetAuraCandidateFilters(DebuffsDB, "HARMFUL", nil, debuffSpellIDs) or nil
 	local debuffLayout = { elementSpacingX = spacing, elementSpacingY = spacing, elementWidth = DebuffsDB.Size, elementHeight = DebuffsDB.Size }
 	local hasDebuffFilters = hasDebuffSpellIDs
 	if DebuffsDB.Filters and not DebuffsDB.OnlyShowPlayer then
@@ -419,8 +430,12 @@ function UUF:UpdateUnitAuras(unitFrame, unit)
 		local customBuffCandidateFilters = GetAuraCandidateFilters(CustomDB, "HELPFUL")
 		local customDebuffCandidateFilters = GetAuraCandidateFilters(CustomDB, "HARMFUL")
 		local customDebuffTypedCandidateFilters = GetAuraCandidateFilters(CustomDB, "HARMFUL", true)
+		local customSpellIDs = not CustomDB.OnlyShowPlayer and GetSpellIDFilters(AurasDB, "Custom") or nil
+		local hasCustomSpellIDs = customSpellIDs ~= nil
+		local customBuffSpellIDCandidateFilters = hasCustomSpellIDs and GetAuraCandidateFilters(CustomDB, "HELPFUL", nil, customSpellIDs) or nil
+		local customDebuffSpellIDCandidateFilters = hasCustomSpellIDs and GetAuraCandidateFilters(CustomDB, "HARMFUL", nil, customSpellIDs) or nil
 		local customLayout = { elementSpacingX = spacing, elementSpacingY = spacing, elementWidth = CustomDB.Size, elementHeight = CustomDB.Size }
-		local hasCustomFilters = false
+		local hasCustomFilters = hasCustomSpellIDs
 		if CustomDB.Filters and not CustomDB.OnlyShowPlayer then
 			if customAuraFilter == "HARMFUL" and CustomDB.Filters.Typed then hasCustomFilters = true end
 			for _, filterGroup in ipairs(AuraFilterGroups) do
@@ -442,6 +457,8 @@ function UUF:UpdateUnitAuras(unitFrame, unit)
 		ConfigureAuraGroup(unitFrame.CustomAuraContainer, "CustomBuffs", "HELPFUL", CustomDB, unit, "Custom", "HELPFUL", CustomDB.Enabled and customAuraFilter == "HELPFUL" and not hasCustomFilters, customBuffCandidateFilters, sortMethod, sortDirection, customLayout)
 		ConfigureAuraGroup(unitFrame.CustomAuraContainer, "CustomDebuffs", "HARMFUL", CustomDB, unit, "Custom", "HARMFUL", CustomDB.Enabled and customAuraFilter == "HARMFUL" and not hasCustomFilters, customDebuffCandidateFilters, sortMethod, sortDirection, customLayout)
 		ConfigureAuraGroup(unitFrame.CustomAuraContainer, "CustomDebuffsTyped", "HARMFUL", CustomDB, unit, "Custom", "HARMFUL", CustomDB.Enabled and customAuraFilter == "HARMFUL" and CustomDB.Filters and CustomDB.Filters.Typed and not CustomDB.OnlyShowPlayer, customDebuffTypedCandidateFilters, sortMethod, sortDirection, customLayout)
+		ConfigureAuraGroup(unitFrame.CustomAuraContainer, "CustomBuffsSpellIDs", "HELPFUL", CustomDB, unit, "Custom", "HELPFUL", CustomDB.Enabled and customAuraFilter == "HELPFUL" and hasCustomSpellIDs, customBuffSpellIDCandidateFilters, sortMethod, sortDirection, customLayout)
+		ConfigureAuraGroup(unitFrame.CustomAuraContainer, "CustomDebuffsSpellIDs", "HARMFUL", CustomDB, unit, "Custom", "HARMFUL", CustomDB.Enabled and customAuraFilter == "HARMFUL" and hasCustomSpellIDs, customDebuffSpellIDCandidateFilters, sortMethod, sortDirection, customLayout)
 		for _, filterGroup in ipairs(AuraFilterGroups) do
 			local buffGroupKey = "CustomBuffs" .. filterGroup.Key
 			local debuffGroupKey = "CustomDebuffs" .. filterGroup.Key

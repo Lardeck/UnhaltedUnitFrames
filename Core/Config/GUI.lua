@@ -3441,81 +3441,6 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
         end
     end
 
-    if auraDB == "Buffs" or auraDB == "Debuffs" then
-        AuraDB.SpellIDs = AuraDB.SpellIDs or {}
-
-        local SpellIDContainer = GUIWidgets.CreateInlineGroup(FilterContainer, "Tracked Spell IDs")
-        local SpellIDEditBox = AG:Create("EditBox")
-        SpellIDEditBox:SetLabel("Add Spell ID or Name")
-        SpellIDEditBox:DisableButton(true)
-        SpellIDEditBox:SetRelativeWidth(1)
-        SpellIDEditBox:SetDisabled(AuraDB.OnlyShowPlayer)
-        SpellIDEditBox:SetCallback("OnEnterPressed", function(widget, _, value)
-            local spellIdentifier = value and value:match("^%s*(.-)%s*$")
-            if not spellIdentifier or spellIdentifier == "" then widget:SetText("") return end
-            local spellID = tonumber(spellIdentifier)
-            if spellID then
-                spellID = math.floor(spellID)
-            elseif C_Spell and C_Spell.GetSpellIDForSpellIdentifier then
-                spellID = C_Spell.GetSpellIDForSpellIdentifier(spellIdentifier)
-            end
-            if not spellID and GetSpellInfo then
-                local _legacyName, _legacyRank, _legacyIcon, _legacyCastTime, _legacyMinRange, _legacyMaxRange, legacySpellID = GetSpellInfo(spellIdentifier)
-                spellID = legacySpellID
-            end
-            if not spellID or spellID <= 0 then widget:SetText("") return end
-            if C_Spell and C_Spell.RequestLoadSpellData then pcall(C_Spell.RequestLoadSpellData, spellID) end
-            AuraDB.SpellIDs[spellID] = true
-            widget:SetText("")
-            UpdateAuras()
-            RefreshAuraSettings()
-        end)
-        SpellIDContainer:AddChild(SpellIDEditBox)
-
-        local spellIDs = {}
-        for spellID in pairs(AuraDB.SpellIDs) do spellIDs[#spellIDs + 1] = spellID end
-        table.sort(spellIDs)
-
-        if #spellIDs == 0 then
-            local EmptyLabel = AG:Create("Label")
-            EmptyLabel:SetText("No SpellIDs.")
-            EmptyLabel:SetFullWidth(true)
-            SpellIDContainer:AddChild(EmptyLabel)
-        end
-
-        for _, spellID in ipairs(spellIDs) do
-            local spellName, icon
-            if C_Spell and C_Spell.GetSpellInfo then
-                local spellInfo = C_Spell.GetSpellInfo(spellID)
-                if spellInfo then
-                    spellName = spellInfo.name
-                    icon = spellInfo.iconID
-                end
-            end
-            if not spellName and GetSpellInfo then
-                local legacyName, _legacyRank, legacyIcon = GetSpellInfo(spellID)
-                spellName = legacyName
-                icon = legacyIcon
-            end
-
-            local SpellLabel = AG:Create("Label")
-            SpellLabel:SetText((icon and "|T" .. icon .. ":16:16:0:0|t " or "") .. (spellName or "Unknown Spell") .. " |cFF8080FF(" .. spellID .. ")|r")
-            SpellLabel:SetRelativeWidth(0.75)
-            SpellIDContainer:AddChild(SpellLabel)
-
-            local DeleteButton = AG:Create("Button")
-            DeleteButton:SetText("Delete")
-            DeleteButton:SetRelativeWidth(0.25)
-            DeleteButton:SetDisabled(AuraDB.OnlyShowPlayer)
-            DeleteButton:SetCallback("OnClick", function()
-                AuraDB.SpellIDs[spellID] = nil
-                UpdateAuras()
-                RefreshAuraSettings()
-            end)
-            SpellIDContainer:AddChild(DeleteButton)
-        end
-    end
-
     local LayoutContainer = GUIWidgets.CreateInlineGroup(containerParent, "Layout & Positioning")
 
     local AnchorFromDropdown = AG:Create("Dropdown")
@@ -3700,6 +3625,110 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     containerParent:DoLayout()
 end
 
+local function CreateSpellIDFilteringSettings(containerParent, unit)
+    local AurasDB = UUF.db.profile.Units[unit].Auras
+    AurasDB.SpellIDFilters = AurasDB.SpellIDFilters or {}
+    local function UpdateAuras()
+        UpdateUnitSettings(unit, function() UUF:UpdateUnitAuras(UUF[unit:upper()], unit) end, "Auras")
+    end
+    local function RefreshSpellIDFilteringSettings()
+        containerParent:ReleaseChildren()
+        CreateSpellIDFilteringSettings(containerParent, unit)
+        containerParent:DoLayout()
+    end
+
+    local SpellIDContainer = GUIWidgets.CreateInlineGroup(containerParent, "SpellID Filtering")
+    local SpellIDEditBox = AG:Create("EditBox")
+    SpellIDEditBox:SetLabel("Add Spell ID or Name")
+    SpellIDEditBox:DisableButton(true)
+    SpellIDEditBox:SetRelativeWidth(1)
+    SpellIDEditBox:SetCallback("OnEnterPressed", function(widget, _, value)
+        local spellIdentifier = value and value:match("^%s*(.-)%s*$")
+        if not spellIdentifier or spellIdentifier == "" then widget:SetText("") return end
+        local spellID = tonumber(spellIdentifier)
+        if spellID then
+            spellID = math.floor(spellID)
+        elseif C_Spell and C_Spell.GetSpellIDForSpellIdentifier then
+            spellID = C_Spell.GetSpellIDForSpellIdentifier(spellIdentifier)
+        end
+        if not spellID and GetSpellInfo then
+            local _legacyName, _legacyRank, _legacyIcon, _legacyCastTime, _legacyMinRange, _legacyMaxRange, legacySpellID = GetSpellInfo(spellIdentifier)
+            spellID = legacySpellID
+        end
+        if not spellID or spellID <= 0 then widget:SetText("") return end
+        if C_Spell and C_Spell.RequestLoadSpellData then pcall(C_Spell.RequestLoadSpellData, spellID) end
+        AurasDB.SpellIDFilters[spellID] = type(AurasDB.SpellIDFilters[spellID]) == "table" and AurasDB.SpellIDFilters[spellID] or {}
+        widget:SetText("")
+        UpdateAuras()
+        RefreshSpellIDFilteringSettings()
+    end)
+    SpellIDContainer:AddChild(SpellIDEditBox)
+
+    local spellIDs = {}
+    for spellID in pairs(AurasDB.SpellIDFilters) do spellIDs[#spellIDs + 1] = spellID end
+    table.sort(spellIDs)
+
+    if #spellIDs == 0 then
+        local EmptyLabel = AG:Create("Label")
+        EmptyLabel:SetText("No SpellIDs.")
+        EmptyLabel:SetFullWidth(true)
+        SpellIDContainer:AddChild(EmptyLabel)
+    end
+
+    local destinationList = { Buffs = "Buffs", Debuffs = "Debuffs" }
+    local destinationOrder = {"Buffs", "Debuffs"}
+    if AurasDB.Custom then
+        destinationList.Custom = "Custom"
+        destinationOrder[#destinationOrder + 1] = "Custom"
+    end
+
+    for _, spellID in ipairs(spellIDs) do
+        AurasDB.SpellIDFilters[spellID] = type(AurasDB.SpellIDFilters[spellID]) == "table" and AurasDB.SpellIDFilters[spellID] or {}
+        local spellName, icon
+        if C_Spell and C_Spell.GetSpellInfo then
+            local spellInfo = C_Spell.GetSpellInfo(spellID)
+            if spellInfo then
+                spellName = spellInfo.name
+                icon = spellInfo.iconID
+            end
+        end
+        if not spellName and GetSpellInfo then
+            local legacyName, _legacyRank, legacyIcon = GetSpellInfo(spellID)
+            spellName = legacyName
+            icon = legacyIcon
+        end
+
+        local SpellLabel = AG:Create("Label")
+        SpellLabel:SetText((icon and "|T" .. icon .. ":16:16:0:0|t " or "") .. (spellName or "Unknown Spell") .. " |cFF8080FF(" .. spellID .. ")|r")
+        SpellLabel:SetRelativeWidth(0.4)
+        SpellIDContainer:AddChild(SpellLabel)
+
+        local DestinationDropdown = AG:Create("Dropdown")
+        DestinationDropdown:SetLabel("Apply To")
+        DestinationDropdown:SetMultiselect(true)
+        DestinationDropdown:SetList(destinationList, destinationOrder)
+        for _, destination in ipairs(destinationOrder) do DestinationDropdown:SetItemValue(destination, AurasDB.SpellIDFilters[spellID][destination] or false) end
+        DestinationDropdown:SetRelativeWidth(0.35)
+        DestinationDropdown:SetCallback("OnValueChanged", function(_, _, destination, value)
+            AurasDB.SpellIDFilters[spellID][destination] = value or nil
+            UpdateAuras()
+        end)
+        SpellIDContainer:AddChild(DestinationDropdown)
+
+        local DeleteButton = AG:Create("Button")
+        DeleteButton:SetText("Delete")
+        DeleteButton:SetRelativeWidth(0.25)
+        DeleteButton:SetCallback("OnClick", function()
+            AurasDB.SpellIDFilters[spellID] = nil
+            UpdateAuras()
+            RefreshSpellIDFilteringSettings()
+        end)
+        SpellIDContainer:AddChild(DeleteButton)
+    end
+
+    containerParent:DoLayout()
+end
+
 local function CreatePrivateAuraSettings(containerParent, unit)
     local PrivateAurasDB = UUF.db.profile.Units[unit].Auras.PrivateAuras
     local function UpdatePrivateAuras()
@@ -3871,6 +3900,8 @@ local function CreateAuraSettings(containerParent, unit)
             CreateSpecificAuraSettings(AuraContainer, unit, "Debuffs")
         elseif AuraTab == "Custom" and AurasDB.Custom then
             CreateSpecificAuraSettings(AuraContainer, unit, "Custom")
+        elseif AuraTab == "SpellIDFiltering" then
+            CreateSpellIDFilteringSettings(AuraContainer, unit)
         end
         containerParent:DoLayout()
     end
@@ -3879,9 +3910,9 @@ local function CreateAuraSettings(containerParent, unit)
     AuraContainerTabGroup:SetLayout("Flow")
     AuraContainerTabGroup:SetFullWidth(true)
     if AurasDB.Custom then
-        AuraContainerTabGroup:SetTabs({ { text = "Buffs", value = "Buffs"}, { text = "Debuffs", value = "Debuffs"}, { text = "Custom", value = "Custom"}, })
+        AuraContainerTabGroup:SetTabs({ { text = "Buffs", value = "Buffs"}, { text = "Debuffs", value = "Debuffs"}, { text = "Custom", value = "Custom"}, { text = "SpellID Filtering", value = "SpellIDFiltering"}, })
     else
-        AuraContainerTabGroup:SetTabs({ { text = "Buffs", value = "Buffs"}, { text = "Debuffs", value = "Debuffs"}, })
+        AuraContainerTabGroup:SetTabs({ { text = "Buffs", value = "Buffs"}, { text = "Debuffs", value = "Debuffs"}, { text = "SpellID Filtering", value = "SpellIDFiltering"}, })
     end
     AuraContainerTabGroup:SetCallback("OnGroupSelected", SelectAuraTab)
     local savedAuraTab = GetSavedSubTab(unit, "Auras", "Buffs")

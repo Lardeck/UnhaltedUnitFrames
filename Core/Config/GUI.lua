@@ -7,6 +7,22 @@ local isGUIOpen = false
 -- Stores last selected tabs: [unit] = { mainTab = "CastBar", subTabs = { CastBar = "Bar" } }
 local lastSelectedUnitTabs = {}
 
+local AuraContainerSupportedFilters = {
+    Player = true,
+    BigDefensivePlayer = true,
+    ExternalDefensivePlayer = true,
+    RaidInCombatPlayer = true,
+    CancelablePlayer = true,
+    NotCancelablePlayer = true,
+    RaidPlayer = true,
+    BigDefensive = true,
+    ExternalDefensive = true,
+    RaidInCombat = true,
+    Cancelable = true,
+    NotCancelable = true,
+    Raid = true,
+}
+
 local function SaveSubTab(unit, tabName, subTabValue)
     if not lastSelectedUnitTabs[unit] then lastSelectedUnitTabs[unit] = {} end
     if not lastSelectedUnitTabs[unit].subTabs then lastSelectedUnitTabs[unit].subTabs = {} end
@@ -3319,6 +3335,11 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     local function UpdateAuras()
         UpdateUnitSettings(unit, function() UUF:UpdateUnitAuras(UUF[unit:upper()], unit, auraDB) end, "Auras")
     end
+    local function RefreshAuraSettings()
+        containerParent:ReleaseChildren()
+        CreateSpecificAuraSettings(containerParent, unit, auraDB)
+        containerParent:DoLayout()
+    end
 
     local AuraContainer = GUIWidgets.CreateInlineGroup(containerParent, auraTitle .. " Settings")
 
@@ -3349,8 +3370,8 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     local OnlyShowPlayerToggle = AG:Create("CheckBox")
     OnlyShowPlayerToggle:SetLabel("Only Show Player " .. auraTitle)
     OnlyShowPlayerToggle:SetValue(AuraDB.OnlyShowPlayer)
-    OnlyShowPlayerToggle:SetCallback("OnValueChanged", function(_, _, value) AuraDB.OnlyShowPlayer = value UpdateAuras() RefreshAuraGUI() end)
-    OnlyShowPlayerToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(OnlyShowPlayerToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine("Uses Blizzard AuraContainer player-owned filtering and can combine with |cFF8080FFBlacklist|r and |cFF8080FFTyped|r debuff filtering.", 1, 1, 1, true) GameTooltip:Show() end)
+    OnlyShowPlayerToggle:SetCallback("OnValueChanged", function(_, _, value) AuraDB.OnlyShowPlayer = value UpdateAuras() RefreshAuraSettings() end)
+    OnlyShowPlayerToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(OnlyShowPlayerToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine("Uses Blizzard AuraContainer player-owned filtering. Advanced filter toggles are ignored while this is enabled.", 1, 1, 1, true) GameTooltip:Show() end)
     OnlyShowPlayerToggle:SetCallback("OnLeave", function() GameTooltip:Hide() end)
     OnlyShowPlayerToggle:SetRelativeWidth(isCustom and 0.5 or 0.33)
     AuraContainer:AddChild(OnlyShowPlayerToggle)
@@ -3369,27 +3390,141 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     BlacklistToggle:SetLabel("Blacklist")
     BlacklistToggle:SetValue(AuraDB.Blacklist or false)
     BlacklistToggle:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Blacklist = value UpdateAuras() end)
-    BlacklistToggle:SetRelativeWidth(filterAuraDB == "Debuffs" and 0.5 or 1)
+    BlacklistToggle:SetRelativeWidth(filterAuraDB == "Debuffs" and 0.33 or 0.5)
     FilterContainer:AddChild(BlacklistToggle)
 
-    if filterAuraDB == "Debuffs" then
-        for _, filter in ipairs(UUF.AURA_FILTERS[filterAuraDB]) do
-            if filter.Key == "Typed" then
-                local filterKey = filter.Key
-                local FilterToggle = AG:Create("CheckBox")
-                FilterToggle:SetLabel(filter.Title)
-                FilterToggle:SetValue(AuraDB.Filters[filterKey] or false)
-                FilterToggle:SetRelativeWidth(0.5)
-                FilterToggle:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Filters[filterKey] = value or nil UpdateAuras() end)
-                FilterToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(FilterToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine(filter.Desc, 1, 1, 1, true) GameTooltip:Show() end)
-                FilterToggle:SetCallback("OnLeave", function() GameTooltip:Hide() end)
-                FilterContainer:AddChild(FilterToggle)
-                break
-            end
+    for _, filter in ipairs(UUF.AURA_FILTERS[filterAuraDB]) do
+        if filter.Group == "General" and filterAuraDB == "Debuffs" and filter.Key == "Typed" then
+            local filterKey = filter.Key
+            local FilterToggle = AG:Create("CheckBox")
+            FilterToggle:SetLabel(filter.Title)
+            FilterToggle:SetValue(AuraDB.Filters[filterKey] or false)
+            FilterToggle:SetRelativeWidth(0.33)
+            FilterToggle:SetDisabled(AuraDB.OnlyShowPlayer)
+            FilterToggle:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Filters[filterKey] = value or nil UpdateAuras() RefreshAuraSettings() end)
+            FilterToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(FilterToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine(filter.Desc, 1, 1, 1, true) GameTooltip:Show() end)
+            FilterToggle:SetCallback("OnLeave", function() GameTooltip:Hide() end)
+            FilterContainer:AddChild(FilterToggle)
         end
     end
 
-    GUIWidgets.CreateInformationTag(FilterContainer, "Blizzard AuraContainers currently support |cFF8080FFBlacklist|r, |cFF8080FFOnly Show Player|r, and |cFF8080FFTyped|r debuff filtering here.")
+    GUIWidgets.CreateInformationTag(FilterContainer, "Dropdowns support |cFF8080FFmultiple selections|r. |cFFFFCC00Player|r is specifically you, where |cFFFFCC00Others|r are all other players/units.")
+
+    for _, filterGroup in ipairs({"Player (You)", "Others (Not You)"}) do
+        local filterList = {}
+        local filterDesc = {}
+        local filterOrder = {}
+        for _, filter in ipairs(UUF.AURA_FILTERS[filterAuraDB]) do
+            if filter.Group == filterGroup and AuraContainerSupportedFilters[filter.Key] then
+                filterList[filter.Key] = filter.Title
+                filterDesc[filter.Key] = filter.Desc
+                filterOrder[#filterOrder + 1] = filter.Key
+            end
+        end
+        if #filterOrder > 0 then
+            local FilterDropdown = AG:Create("Dropdown")
+            FilterDropdown:SetLabel(filterGroup .. " Filters")
+            FilterDropdown:SetMultiselect(true)
+            FilterDropdown:SetList(filterList, filterOrder)
+            for _, dropdownItem in FilterDropdown.pullout:IterateItems() do
+                local desc = filterDesc[dropdownItem.userdata and dropdownItem.userdata.value]
+                if desc then
+                    dropdownItem:SetCallback("OnEnter", function() GameTooltip:SetOwner(dropdownItem.frame, "ANCHOR_CURSOR_RIGHT") GameTooltip:SetFrameStrata("TOOLTIP") GameTooltip:SetFrameLevel((FilterDropdown.pullout.frame:GetFrameLevel() or 0) + 100) GameTooltip:SetToplevel(true) GameTooltip:AddLine(desc, 1, 1, 1, false) GameTooltip:Show() GameTooltip:SetFrameLevel((FilterDropdown.pullout.frame:GetFrameLevel() or 0) + 100) end)
+                    dropdownItem:SetCallback("OnLeave", function() GameTooltip:Hide() end)
+                end
+            end
+            for _, filterKey in ipairs(filterOrder) do FilterDropdown:SetItemValue(filterKey, AuraDB.Filters[filterKey] or false) end
+            FilterDropdown:SetRelativeWidth(0.5)
+            FilterDropdown:SetDisabled(AuraDB.OnlyShowPlayer)
+            FilterDropdown:SetCallback("OnValueChanged", function(_, _, filterKey, value) AuraDB.Filters[filterKey] = value or nil UpdateAuras() end)
+            FilterContainer:AddChild(FilterDropdown)
+        end
+    end
+
+    if auraDB == "Buffs" or auraDB == "Debuffs" then
+        AuraDB.SpellIDs = AuraDB.SpellIDs or {}
+
+        local SpellIDContainer = GUIWidgets.CreateInlineGroup(FilterContainer, "Tracked Spell IDs")
+        local SpellIDEditBox = AG:Create("EditBox")
+        SpellIDEditBox:SetLabel("Add Spell ID")
+        SpellIDEditBox:DisableButton(true)
+        SpellIDEditBox:SetRelativeWidth(1)
+        SpellIDEditBox:SetDisabled(AuraDB.OnlyShowPlayer)
+        SpellIDEditBox:SetCallback("OnEnterPressed", function(widget, _, value)
+            local spellID = tonumber(value)
+            if not spellID then widget:SetText("") return end
+            spellID = math.floor(spellID)
+            if spellID <= 0 then widget:SetText("") return end
+            if C_Spell and C_Spell.RequestLoadSpellData then pcall(C_Spell.RequestLoadSpellData, spellID) end
+            AuraDB.SpellIDs[spellID] = true
+            widget:SetText("")
+            UpdateAuras()
+            RefreshAuraSettings()
+        end)
+        SpellIDContainer:AddChild(SpellIDEditBox)
+
+        local spellIDs = {}
+        for spellID in pairs(AuraDB.SpellIDs) do spellIDs[#spellIDs + 1] = spellID end
+        table.sort(spellIDs)
+
+        if #spellIDs == 0 then
+            local EmptyLabel = AG:Create("Label")
+            EmptyLabel:SetText("No tracked spell IDs.")
+            EmptyLabel:SetFullWidth(true)
+            SpellIDContainer:AddChild(EmptyLabel)
+        end
+
+        for _, spellID in ipairs(spellIDs) do
+            local spellName, icon
+            if C_Spell and C_Spell.GetSpellInfo then
+                local spellInfo = C_Spell.GetSpellInfo(spellID)
+                if spellInfo then
+                    spellName = spellInfo.name
+                    icon = spellInfo.iconID
+                end
+            end
+            if not spellName and GetSpellInfo then
+                local legacyName, _legacyRank, legacyIcon = GetSpellInfo(spellID)
+                spellName = legacyName
+                icon = legacyIcon
+            end
+
+            local SpellLabel = AG:Create("Label")
+            SpellLabel:SetText((icon and "|T" .. icon .. ":16:16:0:0|t " or "") .. (spellName or "Unknown Spell") .. " |cFF8080FF(" .. spellID .. ")|r")
+            SpellLabel:SetRelativeWidth(0.5)
+            SpellIDContainer:AddChild(SpellLabel)
+
+            local SpellEditBox = AG:Create("EditBox")
+            SpellEditBox:SetLabel("")
+            SpellEditBox:SetText(tostring(spellID))
+            SpellEditBox:DisableButton(true)
+            SpellEditBox:SetRelativeWidth(0.25)
+            SpellEditBox:SetDisabled(AuraDB.OnlyShowPlayer)
+            SpellEditBox:SetCallback("OnEnterPressed", function(widget, _, value)
+                local newSpellID = tonumber(value)
+                if not newSpellID then widget:SetText(tostring(spellID)) return end
+                newSpellID = math.floor(newSpellID)
+                if newSpellID <= 0 then widget:SetText(tostring(spellID)) return end
+                if C_Spell and C_Spell.RequestLoadSpellData then pcall(C_Spell.RequestLoadSpellData, newSpellID) end
+                AuraDB.SpellIDs[spellID] = nil
+                AuraDB.SpellIDs[newSpellID] = true
+                UpdateAuras()
+                RefreshAuraSettings()
+            end)
+            SpellIDContainer:AddChild(SpellEditBox)
+
+            local DeleteButton = AG:Create("Button")
+            DeleteButton:SetText("Delete")
+            DeleteButton:SetRelativeWidth(0.25)
+            DeleteButton:SetDisabled(AuraDB.OnlyShowPlayer)
+            DeleteButton:SetCallback("OnClick", function()
+                AuraDB.SpellIDs[spellID] = nil
+                UpdateAuras()
+                RefreshAuraSettings()
+            end)
+            SpellIDContainer:AddChild(DeleteButton)
+        end
+    end
 
     local LayoutContainer = GUIWidgets.CreateInlineGroup(containerParent, "Layout & Positioning")
 

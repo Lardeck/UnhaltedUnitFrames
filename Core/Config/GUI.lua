@@ -3350,7 +3350,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     OnlyShowPlayerToggle:SetLabel("Only Show Player " .. auraTitle)
     OnlyShowPlayerToggle:SetValue(AuraDB.OnlyShowPlayer)
     OnlyShowPlayerToggle:SetCallback("OnValueChanged", function(_, _, value) AuraDB.OnlyShowPlayer = value UpdateAuras() RefreshAuraGUI() end)
-    OnlyShowPlayerToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(OnlyShowPlayerToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine("Overrides |cFF8080FF" .. auraTitle:lower() .. "|r advanced filters. If |cFF8080FFBlacklist|r is checked, it will be respected.", 1, 1, 1, true) GameTooltip:Show() end)
+    OnlyShowPlayerToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(OnlyShowPlayerToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine("Uses Blizzard AuraContainer player-owned filtering and can combine with |cFF8080FFBlacklist|r and |cFF8080FFTyped|r debuff filtering.", 1, 1, 1, true) GameTooltip:Show() end)
     OnlyShowPlayerToggle:SetCallback("OnLeave", function() GameTooltip:Hide() end)
     OnlyShowPlayerToggle:SetRelativeWidth(isCustom and 0.5 or 0.33)
     AuraContainer:AddChild(OnlyShowPlayerToggle)
@@ -3369,55 +3369,27 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     BlacklistToggle:SetLabel("Blacklist")
     BlacklistToggle:SetValue(AuraDB.Blacklist or false)
     BlacklistToggle:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Blacklist = value UpdateAuras() end)
-    BlacklistToggle:SetRelativeWidth(auraDB == "Debuffs" and 0.33 or 0.5)
+    BlacklistToggle:SetRelativeWidth(filterAuraDB == "Debuffs" and 0.5 or 1)
     FilterContainer:AddChild(BlacklistToggle)
 
-    local FilterDropdowns = {}
-
-    for _, filter in ipairs(UUF.AURA_FILTERS[filterAuraDB]) do
-        if filter.Group == "General" then
-            local filterKey = filter.Key
-            local FilterToggle = AG:Create("CheckBox")
-            FilterToggle:SetLabel(filter.Title)
-            FilterToggle:SetValue(AuraDB.Filters[filterKey] or false)
-            FilterToggle:SetRelativeWidth(0.33)
-            FilterToggle:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Filters[filterKey] = value or nil UpdateAuras() RefreshAuraGUI() end)
-            FilterToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(FilterToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine(filter.Desc, 1, 1, 1, true) GameTooltip:Show() end)
-            FilterToggle:SetCallback("OnLeave", function() GameTooltip:Hide() end)
-            FilterContainer:AddChild(FilterToggle)
-        end
-    end
-
-    GUIWidgets.CreateInformationTag(FilterContainer, "Dropdowns support |cFF8080FFmultiple selections|r. |cFFFFCC00Player|r is specifically you, where |cFFFFCC00Others|r are all other players/units.")
-
-    for _, filterGroup in ipairs({"Player (You)", "Others (Not You)"}) do
-        local filterList = {}
-        local filterDesc = {}
-        local filterOrder = {}
-        local FilterDropdown = AG:Create("Dropdown")
+    if filterAuraDB == "Debuffs" then
         for _, filter in ipairs(UUF.AURA_FILTERS[filterAuraDB]) do
-            if filter.Group == filterGroup then
-                filterList[filter.Key] = filter.Title
-                filterDesc[filter.Key] = filter.Desc
-                filterOrder[#filterOrder + 1] = filter.Key
+            if filter.Key == "Typed" then
+                local filterKey = filter.Key
+                local FilterToggle = AG:Create("CheckBox")
+                FilterToggle:SetLabel(filter.Title)
+                FilterToggle:SetValue(AuraDB.Filters[filterKey] or false)
+                FilterToggle:SetRelativeWidth(0.5)
+                FilterToggle:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Filters[filterKey] = value or nil UpdateAuras() end)
+                FilterToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(FilterToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine(filter.Desc, 1, 1, 1, true) GameTooltip:Show() end)
+                FilterToggle:SetCallback("OnLeave", function() GameTooltip:Hide() end)
+                FilterContainer:AddChild(FilterToggle)
+                break
             end
         end
-        FilterDropdown:SetLabel(filterGroup .. " Filters")
-        FilterDropdown:SetMultiselect(true)
-        FilterDropdown:SetList(filterList, filterOrder)
-        for _, dropdownItem in FilterDropdown.pullout:IterateItems() do
-            local desc = filterDesc[dropdownItem.userdata and dropdownItem.userdata.value]
-            if desc then
-                dropdownItem:SetCallback("OnEnter", function() GameTooltip:SetOwner(dropdownItem.frame, "ANCHOR_CURSOR_RIGHT") GameTooltip:SetFrameStrata("TOOLTIP") GameTooltip:SetFrameLevel((FilterDropdown.pullout.frame:GetFrameLevel() or 0) + 100) GameTooltip:SetToplevel(true) GameTooltip:AddLine(desc, 1, 1, 1, false) GameTooltip:Show() GameTooltip:SetFrameLevel((FilterDropdown.pullout.frame:GetFrameLevel() or 0) + 100) end)
-                dropdownItem:SetCallback("OnLeave", function() GameTooltip:Hide() end)
-            end
-        end
-        for _, filterKey in ipairs(filterOrder) do FilterDropdown:SetItemValue(filterKey, AuraDB.Filters[filterKey] or false) end
-        FilterDropdown:SetRelativeWidth(0.5)
-        FilterDropdown:SetCallback("OnValueChanged", function(_, _, filterKey, value) AuraDB.Filters[filterKey] = value or nil UpdateAuras() end)
-        FilterContainer:AddChild(FilterDropdown)
-        FilterDropdowns[#FilterDropdowns + 1] = FilterDropdown
     end
+
+    GUIWidgets.CreateInformationTag(FilterContainer, "Blizzard AuraContainers currently support |cFF8080FFBlacklist|r, |cFF8080FFOnly Show Player|r, and |cFF8080FFTyped|r debuff filtering here.")
 
     local LayoutContainer = GUIWidgets.CreateInlineGroup(containerParent, "Layout & Positioning")
 
@@ -3587,8 +3559,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     function RefreshAuraGUI()
         if AuraDB.Enabled then
             GUIWidgets.DeepDisable(AuraContainer, false, Toggle)
-            GUIWidgets.DeepDisable(FilterContainer, AuraDB.OnlyShowPlayer, BlacklistToggle)
-            for _, FilterDropdown in ipairs(FilterDropdowns) do FilterDropdown:SetDisabled(AuraDB.OnlyShowPlayer or (filterAuraDB == "Debuffs" and AuraDB.Filters.Typed)) end
+            GUIWidgets.DeepDisable(FilterContainer, false, Toggle)
             GUIWidgets.DeepDisable(LayoutContainer, false, Toggle)
             GUIWidgets.DeepDisable(CountContainer, AuraDB.Count.HideStacks, HideStacksToggle)
         else
@@ -3775,8 +3746,6 @@ local function CreateAuraSettings(containerParent, unit)
             CreateSpecificAuraSettings(AuraContainer, unit, "Debuffs")
         elseif AuraTab == "Custom" and AurasDB.Custom then
             CreateSpecificAuraSettings(AuraContainer, unit, "Custom")
-        elseif AuraTab == "PrivateAuras" and AurasDB.PrivateAuras then
-            CreatePrivateAuraSettings(AuraContainer, unit)
         end
         containerParent:DoLayout()
     end
@@ -3784,15 +3753,15 @@ local function CreateAuraSettings(containerParent, unit)
     local AuraContainerTabGroup = AG:Create("TabGroup")
     AuraContainerTabGroup:SetLayout("Flow")
     AuraContainerTabGroup:SetFullWidth(true)
-    if AurasDB.PrivateAuras then
-        AuraContainerTabGroup:SetTabs({ { text = "Buffs", value = "Buffs"}, { text = "Debuffs", value = "Debuffs"}, { text = "Custom", value = "Custom"}, { text = "Private Auras", value = "PrivateAuras"}, })
-    elseif AurasDB.Custom then
+    if AurasDB.Custom then
         AuraContainerTabGroup:SetTabs({ { text = "Buffs", value = "Buffs"}, { text = "Debuffs", value = "Debuffs"}, { text = "Custom", value = "Custom"}, })
     else
         AuraContainerTabGroup:SetTabs({ { text = "Buffs", value = "Buffs"}, { text = "Debuffs", value = "Debuffs"}, })
     end
     AuraContainerTabGroup:SetCallback("OnGroupSelected", SelectAuraTab)
-    AuraContainerTabGroup:SelectTab(GetSavedSubTab(unit, "Auras", "Buffs"))
+    local savedAuraTab = GetSavedSubTab(unit, "Auras", "Buffs")
+    if savedAuraTab == "PrivateAuras" or (savedAuraTab == "Custom" and not AurasDB.Custom) then savedAuraTab = "Buffs" end
+    AuraContainerTabGroup:SelectTab(savedAuraTab)
     containerParent:AddChild(AuraContainerTabGroup)
 
     containerParent:DoLayout()

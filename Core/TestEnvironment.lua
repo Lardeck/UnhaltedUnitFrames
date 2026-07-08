@@ -110,6 +110,12 @@ local function SetTestTexture(texture, enabled, texturePath, ...)
 	texture:Show()
 end
 
+local function SetTestAuraContainersEnabled(unitFrame, enabled)
+	if unitFrame.BuffContainer and unitFrame.BuffContainer.SetEnabled then unitFrame.BuffContainer:SetEnabled(enabled) end
+	if unitFrame.DebuffContainer and unitFrame.DebuffContainer.SetEnabled then unitFrame.DebuffContainer:SetEnabled(enabled) end
+	if unitFrame.CustomAuraContainer and unitFrame.CustomAuraContainer.SetEnabled then unitFrame.CustomAuraContainer:SetEnabled(enabled) end
+end
+
 local function ApplyTestGroupFrame(unitFrame, unit, index, displayName, element)
 	if not unitFrame or not unit then return end
 	if InCombatLockdown() then return end
@@ -140,8 +146,7 @@ local function ApplyTestGroupFrame(unitFrame, unit, index, displayName, element)
 	if updateAll then
 		unitFrame:SetAttribute("unit", nil)
 		UnregisterUnitWatch(unitFrame)
-		if unitFrame:IsElementEnabled("Auras") then unitFrame:DisableElement("Auras") end
-		if unitFrame:IsElementEnabled("CustomAuras") then unitFrame:DisableElement("CustomAuras") end
+		SetTestAuraContainersEnabled(unitFrame, false)
 		unitFrame:Show()
 	end
 	if updateAll or element == "Frame" then
@@ -453,9 +458,6 @@ local function UpdateBossTestEnvironment(element)
 	if InCombatLockdown() then return end
 	local updateAll = not element or element == "all"
 	local BossDB = UUF.db.profile.Units.boss
-	local BuffsDB = BossDB.Auras.Buffs
-	local DebuffsDB = BossDB.Auras.Debuffs
-	local CustomDB = BossDB.Auras.Custom
 	local TagsDB = BossDB.Tags
 	local HealPredictionDB = BossDB.HealPrediction
 	if UUF.BOSS_TEST_MODE then
@@ -470,8 +472,7 @@ local function UpdateBossTestEnvironment(element)
 			if updateAll then
 				BossFrame:SetAttribute("unit", nil)
 				UnregisterUnitWatch(BossFrame)
-				if BossFrame:IsElementEnabled("Auras") then BossFrame:DisableElement("Auras") end
-				if BossFrame:IsElementEnabled("CustomAuras") then BossFrame:DisableElement("CustomAuras") end
+				SetTestAuraContainersEnabled(BossFrame, false)
 				if BossDB.Enabled then BossFrame:Show() else BossFrame:Hide() end
 			end
 			if updateAll or element == "Frame" then BossFrame:SetFrameStrata(BossDB.Frame.FrameStrata) end
@@ -615,16 +616,10 @@ local function UpdateBossTestEnvironment(element)
 				local button = BossFrame.CustomAuraContainer["fake" .. j]
 				if button then button:Hide() end
 			end
-			if BuffsDB.Enabled or DebuffsDB.Enabled then
-				if not BossFrame:IsElementEnabled("Auras") then BossFrame:EnableElement("Auras") end
-				if BossFrame.BuffContainer and BossFrame.BuffContainer.ForceUpdate then BossFrame.BuffContainer:ForceUpdate() end
-				if BossFrame.DebuffContainer and BossFrame.DebuffContainer.ForceUpdate then BossFrame.DebuffContainer:ForceUpdate() end
-			end
-			if CustomDB and CustomDB.Enabled then
-				BossFrame.CustomAuras = BossFrame.CustomAuraContainer
-				if not BossFrame:IsElementEnabled("CustomAuras") then BossFrame:EnableElement("CustomAuras") end
-				if BossFrame.CustomAuraContainer and BossFrame.CustomAuraContainer.ForceUpdate then BossFrame.CustomAuraContainer:ForceUpdate() end
-			end
+			local auraTestMode = UUF.AURA_TEST_MODE
+			UUF.AURA_TEST_MODE = false
+			UUF:CreateTestAuras(BossFrame, "boss" .. i)
+			UUF.AURA_TEST_MODE = auraTestMode
 			BossFrame:Hide()
 		end
 	end

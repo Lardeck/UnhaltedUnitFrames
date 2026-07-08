@@ -3446,15 +3446,24 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
 
         local SpellIDContainer = GUIWidgets.CreateInlineGroup(FilterContainer, "Tracked Spell IDs")
         local SpellIDEditBox = AG:Create("EditBox")
-        SpellIDEditBox:SetLabel("Add Spell ID")
+        SpellIDEditBox:SetLabel("Add Spell ID or Name")
         SpellIDEditBox:DisableButton(true)
         SpellIDEditBox:SetRelativeWidth(1)
         SpellIDEditBox:SetDisabled(AuraDB.OnlyShowPlayer)
         SpellIDEditBox:SetCallback("OnEnterPressed", function(widget, _, value)
-            local spellID = tonumber(value)
-            if not spellID then widget:SetText("") return end
-            spellID = math.floor(spellID)
-            if spellID <= 0 then widget:SetText("") return end
+            local spellIdentifier = value and value:match("^%s*(.-)%s*$")
+            if not spellIdentifier or spellIdentifier == "" then widget:SetText("") return end
+            local spellID = tonumber(spellIdentifier)
+            if spellID then
+                spellID = math.floor(spellID)
+            elseif C_Spell and C_Spell.GetSpellIDForSpellIdentifier then
+                spellID = C_Spell.GetSpellIDForSpellIdentifier(spellIdentifier)
+            end
+            if not spellID and GetSpellInfo then
+                local _legacyName, _legacyRank, _legacyIcon, _legacyCastTime, _legacyMinRange, _legacyMaxRange, legacySpellID = GetSpellInfo(spellIdentifier)
+                spellID = legacySpellID
+            end
+            if not spellID or spellID <= 0 then widget:SetText("") return end
             if C_Spell and C_Spell.RequestLoadSpellData then pcall(C_Spell.RequestLoadSpellData, spellID) end
             AuraDB.SpellIDs[spellID] = true
             widget:SetText("")
@@ -3469,7 +3478,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
 
         if #spellIDs == 0 then
             local EmptyLabel = AG:Create("Label")
-            EmptyLabel:SetText("No tracked spell IDs.")
+            EmptyLabel:SetText("No SpellIDs.")
             EmptyLabel:SetFullWidth(true)
             SpellIDContainer:AddChild(EmptyLabel)
         end
@@ -3491,27 +3500,8 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
 
             local SpellLabel = AG:Create("Label")
             SpellLabel:SetText((icon and "|T" .. icon .. ":16:16:0:0|t " or "") .. (spellName or "Unknown Spell") .. " |cFF8080FF(" .. spellID .. ")|r")
-            SpellLabel:SetRelativeWidth(0.5)
+            SpellLabel:SetRelativeWidth(0.75)
             SpellIDContainer:AddChild(SpellLabel)
-
-            local SpellEditBox = AG:Create("EditBox")
-            SpellEditBox:SetLabel("")
-            SpellEditBox:SetText(tostring(spellID))
-            SpellEditBox:DisableButton(true)
-            SpellEditBox:SetRelativeWidth(0.25)
-            SpellEditBox:SetDisabled(AuraDB.OnlyShowPlayer)
-            SpellEditBox:SetCallback("OnEnterPressed", function(widget, _, value)
-                local newSpellID = tonumber(value)
-                if not newSpellID then widget:SetText(tostring(spellID)) return end
-                newSpellID = math.floor(newSpellID)
-                if newSpellID <= 0 then widget:SetText(tostring(spellID)) return end
-                if C_Spell and C_Spell.RequestLoadSpellData then pcall(C_Spell.RequestLoadSpellData, newSpellID) end
-                AuraDB.SpellIDs[spellID] = nil
-                AuraDB.SpellIDs[newSpellID] = true
-                UpdateAuras()
-                RefreshAuraSettings()
-            end)
-            SpellIDContainer:AddChild(SpellEditBox)
 
             local DeleteButton = AG:Create("Button")
             DeleteButton:SetText("Delete")

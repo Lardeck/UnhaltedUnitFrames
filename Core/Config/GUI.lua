@@ -3670,9 +3670,9 @@ local function CreateSpellIDFilteringSettings(containerParent, unit)
 
     local SpellIDContainer = GUIWidgets.CreateInlineGroup(containerParent, isGlobal and "Global SpellID Filtering" or "SpellID Filtering")
     if isGlobal then
-        GUIWidgets.CreateInformationTag(SpellIDContainer, "Global SpellID filters apply to every unit in addition to any filters configured in that unit's own tab.")
-    elseif unit == "party" or unit == "raid" then
-        GUIWidgets.CreateInformationTag(SpellIDContainer, "SpellID filtering applies to |cFF8080FFBuffs|r and Custom Buffs on party and raid frames. Debuff choices are disabled because Blizzard does not expose exact harmful aura SpellID filtering for assistable units.")
+        GUIWidgets.CreateInformationTag(SpellIDContainer, "Global SpellID filters apply to every unit in addition to any filters configured in that unit's own tab. SpellID filtering is limited to |cFF8080FFBuffs|r and Custom Buffs; Custom only applies where that unit's Custom Auras are set to Buffs.")
+    else
+        GUIWidgets.CreateInformationTag(SpellIDContainer, "SpellID filtering is limited to |cFF8080FFBuffs|r and Custom Buffs.")
     end
     local SpellIDEditBox = AG:Create("EditBox")
     SpellIDEditBox:SetLabel("Add Spell ID or Name")
@@ -3713,9 +3713,9 @@ local function CreateSpellIDFilteringSettings(containerParent, unit)
         SpellIDContainer:AddChild(EmptyLabel)
     end
 
-    local destinationList = { Buffs = "Buffs", Debuffs = "Debuffs" }
-    local destinationOrder = {"Buffs", "Debuffs"}
-    if isGlobal or AurasDB.Custom then
+    local destinationList = { Buffs = "Buffs" }
+    local destinationOrder = {"Buffs"}
+    if isGlobal or AurasDB.Custom and AurasDB.Custom.Type ~= "Debuffs" then
         destinationList.Custom = "Custom"
         destinationOrder[#destinationOrder + 1] = "Custom"
     end
@@ -3784,13 +3784,8 @@ local function CreateSpellIDFilteringSettings(containerParent, unit)
         DestinationDropdown:SetMultiselect(true)
         DestinationDropdown:SetList(destinationList, destinationOrder)
         for _, destination in ipairs(destinationOrder) do DestinationDropdown:SetItemValue(destination, SpellIDFilters[spellID][destination] ~= nil and SpellIDFilters[spellID][destination] ~= false) end
-        if not isGlobal and (unit == "party" or unit == "raid") then
-            DestinationDropdown:SetItemDisabled("Debuffs", true)
-            if AurasDB.Custom and AurasDB.Custom.Type == "Debuffs" then DestinationDropdown:SetItemDisabled("Custom", true) end
-        end
         DestinationDropdown:SetFullWidth(true)
         DestinationDropdown:SetCallback("OnValueChanged", function(_, _, destination, value)
-            if not isGlobal and (unit == "party" or unit == "raid") and (destination == "Debuffs" or destination == "Custom" and AurasDB.Custom and AurasDB.Custom.Type == "Debuffs") then return end
             SpellIDFilters[spellID][destination] = value or nil
             UpdateAuras()
         end)

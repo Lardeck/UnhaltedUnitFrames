@@ -256,9 +256,7 @@ local function ConfigureAuraContainer(container, unitFrame, unit, AurasDB, AuraD
 	local rows = math.max(math.ceil((AuraDB.Num or 0) / perRow), 1)
 	local width = math.max((AuraDB.Size * perRow) + (spacing * (perRow - 1)), 1)
 	local height = math.max((AuraDB.Size * rows) + (spacing * (rows - 1)), 1)
-	local normalizedUnit = UUF:GetNormalizedUnit(unit)
-	local canUseSpellIDFilters = auraType == "HELPFUL" or (normalizedUnit ~= "party" and normalizedUnit ~= "raid" and normalizedUnit ~= "player")
-	local spellIDFilters = canUseSpellIDFilters and not AuraDB.OnlyShowPlayer and GetSpellIDFilters(AurasDB, auraKey) or nil
+	local spellIDFilters = auraType == "HELPFUL" and not AuraDB.OnlyShowPlayer and GetSpellIDFilters(AurasDB, auraKey) or nil
 	local whitelistSpellIDs = spellIDFilters and spellIDFilters.Whitelist
 	local blacklistSpellIDs = spellIDFilters and spellIDFilters.Blacklist
 	local hasSpellIDs = spellIDFilters and spellIDFilters.HasWhitelist
@@ -492,9 +490,7 @@ local function Update(self, _, unit)
 		local width = math.max((CustomDB.Size * perRow) + (spacing * (perRow - 1)), 1)
 		local height = math.max((CustomDB.Size * rows) + (spacing * (rows - 1)), 1)
 		local customAuraFilter = GetCustomAuraFilter(CustomDB)
-		local normalizedUnit = UUF:GetNormalizedUnit(unit)
-		local canUseSpellIDFilters = customAuraFilter == "HELPFUL" or (normalizedUnit ~= "party" and normalizedUnit ~= "raid" and normalizedUnit ~= "player")
-		local spellIDFilters = canUseSpellIDFilters and not CustomDB.OnlyShowPlayer and GetSpellIDFilters(AurasDB, "Custom") or nil
+		local spellIDFilters = customAuraFilter == "HELPFUL" and not CustomDB.OnlyShowPlayer and GetSpellIDFilters(AurasDB, "Custom") or nil
 		local whitelistSpellIDs = spellIDFilters and spellIDFilters.Whitelist
 		local blacklistSpellIDs = spellIDFilters and spellIDFilters.Blacklist
 		local hasSpellIDs = spellIDFilters and spellIDFilters.HasWhitelist

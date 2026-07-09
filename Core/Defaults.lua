@@ -101,6 +101,7 @@ local Defaults = {
                 }
             }
         },
+        GlobalSpellIDFilters = {},
         Units = {
             player = {
                 Enabled = true,

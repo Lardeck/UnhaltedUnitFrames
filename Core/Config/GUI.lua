@@ -317,6 +317,18 @@ local function BuildMainNavigationTree()
         { text = "Party", value = "Party" },
         { text = "Raid", value = "Raid" },
         { text = "Boss", value = "Boss" },
+        { text = "SpellID Filtering", value = "SpellIDFiltering", children = {
+            { text = "Global", value = "global" },
+            { text = "Player", value = "player" },
+            { text = "Target", value = "target" },
+            { text = "Target of Target", value = "targettarget" },
+            { text = "Pet", value = "pet" },
+            { text = "Focus", value = "focus" },
+            { text = "Focus Target", value = "focustarget" },
+            { text = "Party", value = "party" },
+            { text = "Raid", value = "raid" },
+            { text = "Boss", value = "boss" },
+        } },
         { text = "Tags", value = "Tags" },
         { text = "Profiles", value = "Profiles" },
     }
@@ -3643,10 +3655,12 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
 end
 
 local function CreateSpellIDFilteringSettings(containerParent, unit)
-    local AurasDB = UUF.db.profile.Units[unit].Auras
-    AurasDB.SpellIDFilters = AurasDB.SpellIDFilters or {}
+    local isGlobal = unit == "global"
+    local AurasDB = not isGlobal and UUF.db.profile.Units[unit].Auras
+    if isGlobal then UUF.db.profile.GlobalSpellIDFilters = UUF.db.profile.GlobalSpellIDFilters or {} else AurasDB.SpellIDFilters = AurasDB.SpellIDFilters or {} end
+    local SpellIDFilters = isGlobal and UUF.db.profile.GlobalSpellIDFilters or AurasDB.SpellIDFilters
     local function UpdateAuras()
-        UpdateUnitSettings(unit, function() UUF:UpdateUnitAuras(UUF[unit:upper()], unit) end, "Auras")
+        if isGlobal then UUF:UpdateAllUnitFrames() else UpdateUnitSettings(unit, function() UUF:UpdateUnitAuras(UUF[unit:upper()], unit) end, "Auras") end
     end
     local function RefreshSpellIDFilteringSettings()
         containerParent:ReleaseChildren()
@@ -3654,8 +3668,10 @@ local function CreateSpellIDFilteringSettings(containerParent, unit)
         containerParent:DoLayout()
     end
 
-    local SpellIDContainer = GUIWidgets.CreateInlineGroup(containerParent, "SpellID Filtering")
-    if unit == "party" or unit == "raid" then
+    local SpellIDContainer = GUIWidgets.CreateInlineGroup(containerParent, isGlobal and "Global SpellID Filtering" or "SpellID Filtering")
+    if isGlobal then
+        GUIWidgets.CreateInformationTag(SpellIDContainer, "Global SpellID filters apply to every unit in addition to any filters configured in that unit's own tab.")
+    elseif unit == "party" or unit == "raid" then
         GUIWidgets.CreateInformationTag(SpellIDContainer, "SpellID filtering applies to |cFF8080FFBuffs|r and Custom Buffs on party and raid frames. Debuff choices are disabled because Blizzard does not expose exact harmful aura SpellID filtering for assistable units.")
     end
     local SpellIDEditBox = AG:Create("EditBox")
@@ -3677,9 +3693,9 @@ local function CreateSpellIDFilteringSettings(containerParent, unit)
         end
         if not spellID or spellID <= 0 then widget:SetText("") return end
         if C_Spell and C_Spell.RequestLoadSpellData then pcall(C_Spell.RequestLoadSpellData, spellID) end
-        AurasDB.SpellIDFilters[spellID] = type(AurasDB.SpellIDFilters[spellID]) == "table" and AurasDB.SpellIDFilters[spellID] or {}
-        AurasDB.SpellIDFilters[spellID].Mode = AurasDB.SpellIDFilters[spellID].Mode or "Whitelist"
-        AurasDB.SpellIDFilters[spellID].Source = AurasDB.SpellIDFilters[spellID].Source or "Any"
+        SpellIDFilters[spellID] = type(SpellIDFilters[spellID]) == "table" and SpellIDFilters[spellID] or {}
+        SpellIDFilters[spellID].Mode = SpellIDFilters[spellID].Mode or "Whitelist"
+        SpellIDFilters[spellID].Source = SpellIDFilters[spellID].Source or "Any"
         widget:SetText("")
         UpdateAuras()
         RefreshSpellIDFilteringSettings()
@@ -3687,7 +3703,7 @@ local function CreateSpellIDFilteringSettings(containerParent, unit)
     SpellIDContainer:AddChild(SpellIDEditBox)
 
     local spellIDs = {}
-    for spellID in pairs(AurasDB.SpellIDFilters) do spellIDs[#spellIDs + 1] = spellID end
+    for spellID in pairs(SpellIDFilters) do spellIDs[#spellIDs + 1] = spellID end
     table.sort(spellIDs, function(firstSpellID, secondSpellID) return (tonumber(firstSpellID) or 0) < (tonumber(secondSpellID) or 0) end)
 
     if #spellIDs == 0 then
@@ -3699,14 +3715,14 @@ local function CreateSpellIDFilteringSettings(containerParent, unit)
 
     local destinationList = { Buffs = "Buffs", Debuffs = "Debuffs" }
     local destinationOrder = {"Buffs", "Debuffs"}
-    if AurasDB.Custom then
+    if isGlobal or AurasDB.Custom then
         destinationList.Custom = "Custom"
         destinationOrder[#destinationOrder + 1] = "Custom"
     end
 
     for _, spellID in ipairs(spellIDs) do
-        AurasDB.SpellIDFilters[spellID] = type(AurasDB.SpellIDFilters[spellID]) == "table" and AurasDB.SpellIDFilters[spellID] or {}
-        local SpellIDFilterDB = AurasDB.SpellIDFilters[spellID]
+        SpellIDFilters[spellID] = type(SpellIDFilters[spellID]) == "table" and SpellIDFilters[spellID] or {}
+        local SpellIDFilterDB = SpellIDFilters[spellID]
         local filterMode = "Whitelist"
         local filterSource = "Any"
         if SpellIDFilterDB.Mode == "Blacklist" or SpellIDFilterDB.Mode == "None" then filterMode = SpellIDFilterDB.Mode end
@@ -3757,7 +3773,7 @@ local function CreateSpellIDFilteringSettings(containerParent, unit)
         DeleteButton:SetText("Delete")
         DeleteButton:SetRelativeWidth(0.25)
         DeleteButton:SetCallback("OnClick", function()
-            AurasDB.SpellIDFilters[spellID] = nil
+            SpellIDFilters[spellID] = nil
             UpdateAuras()
             RefreshSpellIDFilteringSettings()
         end)
@@ -3767,15 +3783,15 @@ local function CreateSpellIDFilteringSettings(containerParent, unit)
         DestinationDropdown:SetLabel("Apply To")
         DestinationDropdown:SetMultiselect(true)
         DestinationDropdown:SetList(destinationList, destinationOrder)
-        for _, destination in ipairs(destinationOrder) do DestinationDropdown:SetItemValue(destination, AurasDB.SpellIDFilters[spellID][destination] ~= nil and AurasDB.SpellIDFilters[spellID][destination] ~= false) end
-        if unit == "party" or unit == "raid" then
+        for _, destination in ipairs(destinationOrder) do DestinationDropdown:SetItemValue(destination, SpellIDFilters[spellID][destination] ~= nil and SpellIDFilters[spellID][destination] ~= false) end
+        if not isGlobal and (unit == "party" or unit == "raid") then
             DestinationDropdown:SetItemDisabled("Debuffs", true)
             if AurasDB.Custom and AurasDB.Custom.Type == "Debuffs" then DestinationDropdown:SetItemDisabled("Custom", true) end
         end
         DestinationDropdown:SetFullWidth(true)
         DestinationDropdown:SetCallback("OnValueChanged", function(_, _, destination, value)
-            if (unit == "party" or unit == "raid") and (destination == "Debuffs" or destination == "Custom" and AurasDB.Custom and AurasDB.Custom.Type == "Debuffs") then return end
-            AurasDB.SpellIDFilters[spellID][destination] = value or nil
+            if not isGlobal and (unit == "party" or unit == "raid") and (destination == "Debuffs" or destination == "Custom" and AurasDB.Custom and AurasDB.Custom.Type == "Debuffs") then return end
+            SpellIDFilters[spellID][destination] = value or nil
             UpdateAuras()
         end)
         SpellIDContainer:AddChild(DestinationDropdown)
@@ -3955,8 +3971,6 @@ local function CreateAuraSettings(containerParent, unit)
             CreateSpecificAuraSettings(AuraContainer, unit, "Debuffs")
         elseif AuraTab == "Custom" and AurasDB.Custom then
             CreateSpecificAuraSettings(AuraContainer, unit, "Custom")
-        elseif AuraTab == "SpellIDFiltering" then
-            CreateSpellIDFilteringSettings(AuraContainer, unit)
         end
         containerParent:DoLayout()
     end
@@ -3965,13 +3979,13 @@ local function CreateAuraSettings(containerParent, unit)
     AuraContainerTabGroup:SetLayout("Flow")
     AuraContainerTabGroup:SetFullWidth(true)
     if AurasDB.Custom then
-        AuraContainerTabGroup:SetTabs({ { text = "Buffs", value = "Buffs"}, { text = "Debuffs", value = "Debuffs"}, { text = "Custom", value = "Custom"}, { text = "SpellID Filtering", value = "SpellIDFiltering"}, })
+        AuraContainerTabGroup:SetTabs({ { text = "Buffs", value = "Buffs"}, { text = "Debuffs", value = "Debuffs"}, { text = "Custom", value = "Custom"}, })
     else
-        AuraContainerTabGroup:SetTabs({ { text = "Buffs", value = "Buffs"}, { text = "Debuffs", value = "Debuffs"}, { text = "SpellID Filtering", value = "SpellIDFiltering"}, })
+        AuraContainerTabGroup:SetTabs({ { text = "Buffs", value = "Buffs"}, { text = "Debuffs", value = "Debuffs"}, })
     end
     AuraContainerTabGroup:SetCallback("OnGroupSelected", SelectAuraTab)
     local savedAuraTab = GetSavedSubTab(unit, "Auras", "Buffs")
-    if savedAuraTab == "PrivateAuras" or (savedAuraTab == "Custom" and not AurasDB.Custom) then savedAuraTab = "Buffs" end
+    if savedAuraTab == "PrivateAuras" or savedAuraTab == "SpellIDFiltering" or (savedAuraTab == "Custom" and not AurasDB.Custom) then savedAuraTab = "Buffs" end
     AuraContainerTabGroup:SelectTab(savedAuraTab)
     containerParent:AddChild(AuraContainerTabGroup)
 
@@ -4659,6 +4673,7 @@ function UUF:CreateGUI()
 		if UUF.AURA_TEST_MODE then
 			for unit, _ in pairs(UUF.db.profile.Units) do DisableAurasTestMode(unit) end
 		end
+        local spellIDFilteringUnit = MainTab and MainTab:match("^SpellIDFiltering\001(.+)$")
 
         local Wrapper = AG:Create("SimpleGroup")
         Wrapper:SetFullWidth(true)
@@ -4775,6 +4790,12 @@ function UUF:CreateGUI()
             CreateUnitSettings(ScrollFrame, "boss")
 
             ScrollFrame:DoLayout()
+        elseif MainTab == "SpellIDFiltering" or spellIDFilteringUnit then
+            local ScrollFrame = GUIWidgets.CreateScrollFrame(Wrapper)
+
+            CreateSpellIDFilteringSettings(ScrollFrame, spellIDFilteringUnit or "global")
+
+            ScrollFrame:DoLayout()
         elseif MainTab == "Tags" then
             local ScrollFrame = GUIWidgets.CreateScrollFrame(Wrapper)
             CreateTagSettings(ScrollFrame)
@@ -4796,6 +4817,11 @@ function UUF:CreateGUI()
     local mainNavigationValues = {}
     for _, entry in ipairs(mainNavigationTree) do
         mainNavigationValues[entry.value] = true
+        if entry.children then
+            for _, childEntry in ipairs(entry.children) do
+                mainNavigationValues[entry.value .. "\001" .. childEntry.value] = true
+            end
+        end
     end
 
     UUFGUI.MainNavigationStatus = UUFGUI.MainNavigationStatus or {}

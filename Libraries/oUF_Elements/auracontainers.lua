@@ -124,36 +124,41 @@ UUF.StyleAuras = StyleAuras
 UUF.FilterAura = function() return true end
 
 local function GetSpellIDFilters(AurasDB, auraKey)
-	if not AurasDB.SpellIDFilters then return end
 	local spellIDFilters
-	for spellID, auraDestinations in pairs(AurasDB.SpellIDFilters) do
-		if type(auraDestinations) == "table" and auraDestinations[auraKey] then
-			local auraDestination = auraDestinations[auraKey]
-			local mode = auraDestinations.Mode or "Whitelist"
-			local source = auraDestinations.Source or "Any"
-			if type(auraDestination) == "table" then
-				mode = auraDestination.Mode or mode
-				source = auraDestination.Source or source
-			end
-			if mode == "Whitelist" or mode == "Blacklist" then
-				local spellIDValue = tonumber(spellID) or spellID
-				if source ~= "Player" and source ~= "Other" then source = "Any" end
-				spellIDFilters = spellIDFilters or {Whitelist = {}, Blacklist = {}}
-				if mode == "Whitelist" then
-					spellIDFilters.HasWhitelist = true
-					spellIDFilters.Whitelist[source] = spellIDFilters.Whitelist[source] or {}
-					spellIDFilters.Whitelist[source][spellIDValue] = true
-				elseif source == "Any" then
-					spellIDFilters.Blacklist.Any = spellIDFilters.Blacklist.Any or {}
-					spellIDFilters.Blacklist.Player = spellIDFilters.Blacklist.Player or {}
-					spellIDFilters.Blacklist.Other = spellIDFilters.Blacklist.Other or {}
-					spellIDFilters.Blacklist.Any[spellIDValue] = true
-					spellIDFilters.Blacklist.Player[spellIDValue] = true
-					spellIDFilters.Blacklist.Other[spellIDValue] = true
-				else
-					spellIDFilters.HasSourceBlacklist = true
-					spellIDFilters.Blacklist[source] = spellIDFilters.Blacklist[source] or {}
-					spellIDFilters.Blacklist[source][spellIDValue] = true
+	local SpellIDFilterDB = UUF.db.profile.GlobalSpellIDFilters
+	for filterIndex = 1, 2 do
+		if filterIndex == 2 then SpellIDFilterDB = AurasDB.SpellIDFilters end
+		if SpellIDFilterDB then
+			for spellID, auraDestinations in pairs(SpellIDFilterDB) do
+				if type(auraDestinations) == "table" and auraDestinations[auraKey] then
+					local auraDestination = auraDestinations[auraKey]
+					local mode = auraDestinations.Mode or "Whitelist"
+					local source = auraDestinations.Source or "Any"
+					if type(auraDestination) == "table" then
+						mode = auraDestination.Mode or mode
+						source = auraDestination.Source or source
+					end
+					if mode == "Whitelist" or mode == "Blacklist" then
+						local spellIDValue = tonumber(spellID) or spellID
+						if source ~= "Player" and source ~= "Other" then source = "Any" end
+						spellIDFilters = spellIDFilters or {Whitelist = {}, Blacklist = {}}
+						if mode == "Whitelist" then
+							spellIDFilters.HasWhitelist = true
+							spellIDFilters.Whitelist[source] = spellIDFilters.Whitelist[source] or {}
+							spellIDFilters.Whitelist[source][spellIDValue] = true
+						elseif source == "Any" then
+							spellIDFilters.Blacklist.Any = spellIDFilters.Blacklist.Any or {}
+							spellIDFilters.Blacklist.Player = spellIDFilters.Blacklist.Player or {}
+							spellIDFilters.Blacklist.Other = spellIDFilters.Blacklist.Other or {}
+							spellIDFilters.Blacklist.Any[spellIDValue] = true
+							spellIDFilters.Blacklist.Player[spellIDValue] = true
+							spellIDFilters.Blacklist.Other[spellIDValue] = true
+						else
+							spellIDFilters.HasSourceBlacklist = true
+							spellIDFilters.Blacklist[source] = spellIDFilters.Blacklist[source] or {}
+							spellIDFilters.Blacklist[source][spellIDValue] = true
+						end
+					end
 				end
 			end
 		end

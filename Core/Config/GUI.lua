@@ -23,6 +23,11 @@ local AuraContainerSupportedFilters = {
     Raid = true,
 }
 
+local SpellIDFilterModes = { Whitelist = "Whitelist", Blacklist = "Blacklist", None = "None" }
+local SpellIDFilterModeOrder = {"Whitelist", "Blacklist", "None"}
+local SpellIDFilterSources = { Any = "Any", Player = "Player", Other = "Other" }
+local SpellIDFilterSourceOrder = {"Any", "Player", "Other"}
+
 local function SaveSubTab(unit, tabName, subTabValue)
     if not lastSelectedUnitTabs[unit] then lastSelectedUnitTabs[unit] = {} end
     if not lastSelectedUnitTabs[unit].subTabs then lastSelectedUnitTabs[unit].subTabs = {} end
@@ -39,6 +44,10 @@ end
 
 local function UpdateUnitSettings(unit, updateCallback, element)
 	if unit == "boss" and UUF.BOSS_TEST_MODE or unit == "party" and UUF.PARTY_TEST_MODE or unit == "raid" and UUF.RAID_TEST_MODE then
+		if unit == "raid" then
+			UUF.TEST_ENVIRONMENT_DIRTY = UUF.TEST_ENVIRONMENT_DIRTY or {}
+			UUF.TEST_ENVIRONMENT_DIRTY.raid = true
+		end
 		UUF:UpdateTestEnvironment(unit, element or "all")
 	elseif unit == "boss" then
 		UUF:UpdateBossFrames()
@@ -253,23 +262,31 @@ local function DisableRaidFramesTestMode()
 end
 
 local function DisableAllTestModes()
+	local auraTestMode = UUF.AURA_TEST_MODE
+	local bossTestMode = UUF.BOSS_TEST_MODE
+	local partyTestMode = UUF.PARTY_TEST_MODE
+	local raidTestMode = UUF.RAID_TEST_MODE
 	UUF.AURA_TEST_MODE = false
 	UUF.CASTBAR_TEST_MODE = false
 	UUF.BOSS_TEST_MODE = false
 	UUF.PARTY_TEST_MODE = false
 	UUF.RAID_TEST_MODE = false
 	UUF.MOVERS_UNLOCKED = false
-	for unit, _ in pairs(UUF.db.profile.Units) do
-		if unit == "party" or unit == "raid" then
-			DisableAurasTestMode(unit)
-		elseif UUF[unit:upper()] then
-			UUF:CreateTestAuras(UUF[unit:upper()], unit)
-			UUF:CreateTestCastBar(UUF[unit:upper()], unit)
+	if auraTestMode then
+		for unit, _ in pairs(UUF.db.profile.Units) do
+			if unit == "party" or unit == "raid" then
+				DisableAurasTestMode(unit)
+			elseif UUF[unit:upper()] then
+				UUF:CreateTestAuras(UUF[unit:upper()], unit)
+			end
 		end
 	end
-	UUF:UpdateTestEnvironment("boss", "all")
-	UUF:UpdateTestEnvironment("party", "all")
-	UUF:UpdateTestEnvironment("raid", "all")
+	for unit, _ in pairs(UUF.db.profile.Units) do
+		if UUF[unit:upper()] then UUF:CreateTestCastBar(UUF[unit:upper()], unit) end
+	end
+	if bossTestMode then UUF:UpdateTestEnvironment("boss", "all") end
+	if partyTestMode then UUF:UpdateTestEnvironment("party", "all") end
+	if raidTestMode then UUF:UpdateTestEnvironment("raid", "all") end
 	for _, frameMover in pairs(UUF.MOVERS or {}) do frameMover:Hide() end
 end
 
@@ -3638,6 +3655,9 @@ local function CreateSpellIDFilteringSettings(containerParent, unit)
     end
 
     local SpellIDContainer = GUIWidgets.CreateInlineGroup(containerParent, "SpellID Filtering")
+    if unit == "party" or unit == "raid" then
+        GUIWidgets.CreateInformationTag(SpellIDContainer, "SpellID filtering applies to |cFF8080FFBuffs|r and Custom Buffs on party and raid frames. Debuff choices are disabled because Blizzard does not expose exact harmful aura SpellID filtering for assistable units.")
+    end
     local SpellIDEditBox = AG:Create("EditBox")
     SpellIDEditBox:SetLabel("Add Spell ID or Name")
     SpellIDEditBox:DisableButton(true)
@@ -3658,6 +3678,8 @@ local function CreateSpellIDFilteringSettings(containerParent, unit)
         if not spellID or spellID <= 0 then widget:SetText("") return end
         if C_Spell and C_Spell.RequestLoadSpellData then pcall(C_Spell.RequestLoadSpellData, spellID) end
         AurasDB.SpellIDFilters[spellID] = type(AurasDB.SpellIDFilters[spellID]) == "table" and AurasDB.SpellIDFilters[spellID] or {}
+        AurasDB.SpellIDFilters[spellID].Mode = AurasDB.SpellIDFilters[spellID].Mode or "Whitelist"
+        AurasDB.SpellIDFilters[spellID].Source = AurasDB.SpellIDFilters[spellID].Source or "Any"
         widget:SetText("")
         UpdateAuras()
         RefreshSpellIDFilteringSettings()
@@ -3666,7 +3688,7 @@ local function CreateSpellIDFilteringSettings(containerParent, unit)
 
     local spellIDs = {}
     for spellID in pairs(AurasDB.SpellIDFilters) do spellIDs[#spellIDs + 1] = spellID end
-    table.sort(spellIDs)
+    table.sort(spellIDs, function(firstSpellID, secondSpellID) return (tonumber(firstSpellID) or 0) < (tonumber(secondSpellID) or 0) end)
 
     if #spellIDs == 0 then
         local EmptyLabel = AG:Create("Label")
@@ -3684,36 +3706,52 @@ local function CreateSpellIDFilteringSettings(containerParent, unit)
 
     for _, spellID in ipairs(spellIDs) do
         AurasDB.SpellIDFilters[spellID] = type(AurasDB.SpellIDFilters[spellID]) == "table" and AurasDB.SpellIDFilters[spellID] or {}
+        local SpellIDFilterDB = AurasDB.SpellIDFilters[spellID]
+        local filterMode = "Whitelist"
+        local filterSource = "Any"
+        if SpellIDFilterDB.Mode == "Blacklist" or SpellIDFilterDB.Mode == "None" then filterMode = SpellIDFilterDB.Mode end
+        if SpellIDFilterDB.Source == "Player" or SpellIDFilterDB.Source == "Other" then filterSource = SpellIDFilterDB.Source end
         local spellName, icon
+        local spellInfoID = tonumber(spellID) or spellID
         if C_Spell and C_Spell.GetSpellInfo then
-            local spellInfo = C_Spell.GetSpellInfo(spellID)
+            local spellInfo = C_Spell.GetSpellInfo(spellInfoID)
             if spellInfo then
                 spellName = spellInfo.name
                 icon = spellInfo.iconID
             end
         end
         if not spellName and GetSpellInfo then
-            local legacyName, _legacyRank, legacyIcon = GetSpellInfo(spellID)
+            local legacyName, _legacyRank, legacyIcon = GetSpellInfo(spellInfoID)
             spellName = legacyName
             icon = legacyIcon
         end
 
         local SpellLabel = AG:Create("Label")
         SpellLabel:SetText((icon and "|T" .. icon .. ":16:16:0:0|t " or "") .. (spellName or "Unknown Spell") .. " |cFF8080FF(" .. spellID .. ")|r")
-        SpellLabel:SetRelativeWidth(0.4)
+        SpellLabel:SetRelativeWidth(0.35)
         SpellIDContainer:AddChild(SpellLabel)
 
-        local DestinationDropdown = AG:Create("Dropdown")
-        DestinationDropdown:SetLabel("Apply To")
-        DestinationDropdown:SetMultiselect(true)
-        DestinationDropdown:SetList(destinationList, destinationOrder)
-        for _, destination in ipairs(destinationOrder) do DestinationDropdown:SetItemValue(destination, AurasDB.SpellIDFilters[spellID][destination] or false) end
-        DestinationDropdown:SetRelativeWidth(0.35)
-        DestinationDropdown:SetCallback("OnValueChanged", function(_, _, destination, value)
-            AurasDB.SpellIDFilters[spellID][destination] = value or nil
+        local ModeDropdown = AG:Create("Dropdown")
+        ModeDropdown:SetLabel("Mode")
+        ModeDropdown:SetList(SpellIDFilterModes, SpellIDFilterModeOrder)
+        ModeDropdown:SetValue(filterMode)
+        ModeDropdown:SetRelativeWidth(0.2)
+        ModeDropdown:SetCallback("OnValueChanged", function(_, _, value)
+            SpellIDFilterDB.Mode = value
             UpdateAuras()
         end)
-        SpellIDContainer:AddChild(DestinationDropdown)
+        SpellIDContainer:AddChild(ModeDropdown)
+
+        local SourceDropdown = AG:Create("Dropdown")
+        SourceDropdown:SetLabel("Source")
+        SourceDropdown:SetList(SpellIDFilterSources, SpellIDFilterSourceOrder)
+        SourceDropdown:SetValue(filterSource)
+        SourceDropdown:SetRelativeWidth(0.2)
+        SourceDropdown:SetCallback("OnValueChanged", function(_, _, value)
+            SpellIDFilterDB.Source = value
+            UpdateAuras()
+        end)
+        SpellIDContainer:AddChild(SourceDropdown)
 
         local DeleteButton = AG:Create("Button")
         DeleteButton:SetText("Delete")
@@ -3724,6 +3762,23 @@ local function CreateSpellIDFilteringSettings(containerParent, unit)
             RefreshSpellIDFilteringSettings()
         end)
         SpellIDContainer:AddChild(DeleteButton)
+
+        local DestinationDropdown = AG:Create("Dropdown")
+        DestinationDropdown:SetLabel("Apply To")
+        DestinationDropdown:SetMultiselect(true)
+        DestinationDropdown:SetList(destinationList, destinationOrder)
+        for _, destination in ipairs(destinationOrder) do DestinationDropdown:SetItemValue(destination, AurasDB.SpellIDFilters[spellID][destination] ~= nil and AurasDB.SpellIDFilters[spellID][destination] ~= false) end
+        if unit == "party" or unit == "raid" then
+            DestinationDropdown:SetItemDisabled("Debuffs", true)
+            if AurasDB.Custom and AurasDB.Custom.Type == "Debuffs" then DestinationDropdown:SetItemDisabled("Custom", true) end
+        end
+        DestinationDropdown:SetFullWidth(true)
+        DestinationDropdown:SetCallback("OnValueChanged", function(_, _, destination, value)
+            if (unit == "party" or unit == "raid") and (destination == "Debuffs" or destination == "Custom" and AurasDB.Custom and AurasDB.Custom.Type == "Debuffs") then return end
+            AurasDB.SpellIDFilters[spellID][destination] = value or nil
+            UpdateAuras()
+        end)
+        SpellIDContainer:AddChild(DestinationDropdown)
     end
 
     containerParent:DoLayout()
@@ -4601,7 +4656,9 @@ function UUF:CreateGUI()
 
     local function SelectTab(GUIContainer, _, MainTab)
 		GUIContainer:ReleaseChildren()
-		for unit, _ in pairs(UUF.db.profile.Units) do DisableAurasTestMode(unit) end
+		if UUF.AURA_TEST_MODE then
+			for unit, _ in pairs(UUF.db.profile.Units) do DisableAurasTestMode(unit) end
+		end
 
         local Wrapper = AG:Create("SimpleGroup")
         Wrapper:SetFullWidth(true)

@@ -302,13 +302,11 @@ local function ApplyTestGroupFrame(unitFrame, unit, index, displayName, element)
 	end
 
 	if updateAll or element == "Auras" then
-		local auraTestMode = UUF.AURA_TEST_MODE
-		if not updateAll then
-			UUF.AURA_TEST_MODE = false
-			UUF:UpdateUnitAuras(unitFrame, unit)
+		if UUF.AURA_TEST_MODE or element == "Auras" then
+			UUF:CreateTestAuras(unitFrame, unit)
+		else
+			UUF:CreateTestAuras(unitFrame, unit, true)
 		end
-		UUF.AURA_TEST_MODE = auraTestMode
-		UUF:CreateTestAuras(unitFrame, unit)
 	end
 	if updateAll or element == "Tags" then
 		for tagIndex, tagName in ipairs(TestTagOrder) do ApplyTestTag(unitFrame.Tags and unitFrame.Tags[tagName], unitFrame, TagsDB[tagName], tagIndex == 1 and displayName or "Tag " .. tagIndex) end
@@ -322,9 +320,8 @@ local function RestoreGroupFrame(unitFrame, unit)
 	RegisterUnitWatch(unitFrame)
 	local auraTestMode = UUF.AURA_TEST_MODE
 	UUF.AURA_TEST_MODE = false
-	UUF:CreateTestAuras(unitFrame, unit)
+	UUF:CreateTestAuras(unitFrame, unit, true)
 	UUF.AURA_TEST_MODE = auraTestMode
-	UUF:UpdateUnitFrame(unitFrame, unit)
 end
 
 function UUF:CreateRaidTestFrames()
@@ -407,6 +404,7 @@ function UUF:EnableTestGroupFrames(unit)
 		local UnitDB = UUF.db.profile.Units.raid
 		if not UnitDB or not UnitDB.Enabled then if UUF.RAID_CONTAINER then UUF.RAID_CONTAINER:Hide() end return end
 		if not UUF.RAID_CONTAINER then UUF:SpawnGroupFrame("raid") end
+		if UUF.TEST_ENVIRONMENT_DIRTY then UUF.TEST_ENVIRONMENT_DIRTY.raid = nil end
 		UUF:CreateRaidTestFrames()
 		for _, header in ipairs(UUF.RAID_HEADERS) do header:Hide() end
 		UUF:UpdateTestEnvironment("raid", "all")
@@ -436,18 +434,24 @@ local function UpdateRaidTestEnvironment(element)
 	if InCombatLockdown() then return end
 	if not UUF.RAID_TEST_MODE then
 		if element ~= "all" then return end
+		local updateLiveFrames = UUF.TEST_ENVIRONMENT_DIRTY and UUF.TEST_ENVIRONMENT_DIRTY.raid
 		for i, raidFrame in ipairs(UUF.RAID_TEST_FRAMES) do
 			raidFrame:SetAttribute("unit", "raid" .. i)
 			UnregisterUnitWatch(raidFrame)
 			local auraTestMode = UUF.AURA_TEST_MODE
 			UUF.AURA_TEST_MODE = false
-			UUF:CreateTestAuras(raidFrame, "raid" .. i)
+			UUF:CreateTestAuras(raidFrame, "raid" .. i, true)
 			UUF.AURA_TEST_MODE = auraTestMode
 			raidFrame:Hide()
 		end
 		for _, header in ipairs(UUF.RAID_HEADERS) do header:Show() end
-		UUF:UpdateGroupFrame("raid")
-		UUF:UpdateUnitTags("raid")
+		if updateLiveFrames then
+			UUF:UpdateGroupFrame("raid")
+			UUF:UpdateUnitTags("raid")
+			UUF.TEST_ENVIRONMENT_DIRTY.raid = nil
+		else
+			UUF:LayoutGroupFrames("raid")
+		end
 		return
 	end
 	for i, raidFrame in ipairs(UUF.RAID_TEST_FRAMES) do ApplyTestGroupFrame(raidFrame, "raid" .. i, i, "Raid " .. i, element) end
@@ -549,13 +553,11 @@ local function UpdateBossTestEnvironment(element)
 			end
 
 			if updateAll or element == "Auras" then
-				local auraTestMode = UUF.AURA_TEST_MODE
-				if not updateAll then
-					UUF.AURA_TEST_MODE = false
-					UUF:UpdateUnitAuras(BossFrame, "boss" .. i)
+				if UUF.AURA_TEST_MODE or element == "Auras" then
+					UUF:CreateTestAuras(BossFrame, "boss" .. i)
+				else
+					UUF:CreateTestAuras(BossFrame, "boss" .. i, true)
 				end
-				UUF.AURA_TEST_MODE = auraTestMode
-				UUF:CreateTestAuras(BossFrame, "boss" .. i)
 			end
 
 			if (updateAll or element == "Indicators") and BossFrame.TargetIndicator then

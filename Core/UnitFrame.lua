@@ -71,6 +71,7 @@ function UUF:CreateUnitFrame(unitFrame, unit)
 			if frame.Tags then for configuredTag in pairs(RaidDB.Tags) do UUF:UpdateUnitTag(frame, value, configuredTag) end elseif frame.UpdateTags then frame:UpdateTags() end
 			UUF:UpdateUnitPowerBar(frame, value)
 			UUF:UpdateUnitRoleIndicator(frame, value)
+			UUF:UpdateUnitAuras(frame, value)
 		end)
 	end
     ApplyScripts(unitFrame)

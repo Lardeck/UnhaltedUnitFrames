@@ -1,20 +1,23 @@
 ## V12.1.0
 - Add Party / Raid Frames.
+- Add Dedicated Augmentation Raid Frames.
+  - Define rendered frames by Unit Name.
+  - All Settings from Raid Frames are supported yet separated.
 - Indicators:
-  - Ready Check.
-  - Resurrect.
-  - Threat.
-  - Phase.
-  - Role.
-  - Fix Highlight / Target Overlays breaking when making changes.
+  - Added: Ready Check.
+  - Added: Resurrect.
+  - Added: Threat.
+  - Added: Phase.
+  - Added: Role.
+  - Added: Summon.
+  - Fixed: Highlight / Target Overlays breaking when making changes.
 - Tags
   - Healer Mana & Healer Mana with Sign.
+  - `perhp` tag has been redefined to support statuses.
+  - Move to localised `DEAD`.
+- Power Bar has `Only Show Healer Mana` option.
 - Test Environment Rework.
 - Dead & Offline Backdrop Colour.
 - Heal Absorbs will reverse grow when selecting `Attach to Missing Health`.
-- Fixed Units not updating correctly when disconnected.
-- Fixed Tags.
 - Added `Unhalted Unit Frames` to Main Menu.
 - Added `Interrupt on Cooldown` Colour for Cast Bars.
-- Fixed Pet Frames not being Class Coloured.
-- Fixed Font Shadows.

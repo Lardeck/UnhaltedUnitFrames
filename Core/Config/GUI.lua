@@ -3593,7 +3593,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraSlot, refre
     LayoutContainer:AddChild(PerRowSlider)
 
     local GrowthDirectionDropdown = AG:Create("Dropdown")
-    GrowthDirectionDropdown:SetList({ ["LEFT"] = "Left", ["RIGHT"] = "Right"})
+    GrowthDirectionDropdown:SetList({["LEFT"] = "Left", ["CENTER"] = "Centered", ["RIGHT"] = "Right"}, {"LEFT", "CENTER", "RIGHT"})
     GrowthDirectionDropdown:SetLabel("Growth Direction")
     GrowthDirectionDropdown:SetValue(AuraDB.GrowthDirection)
     GrowthDirectionDropdown:SetRelativeWidth(0.5)
@@ -4480,12 +4480,12 @@ function UUF:CreateGUI()
     Container:SetHeight(600)
     Container:EnableResize(false)
     Container:SetCallback("OnClose", function(widget)
-		local reloadRequired = reloadRequired
+		local shouldReload = reloadRequired
 		reloadRequired = false
 		AG:Release(widget)
 		isGUIOpen = false
 		DisableAllTestModes()
-		if reloadRequired then UUF:CreatePrompt("Reload UI", "Aura visual settings have changed. Reload the UI now to apply them?", function() C_UI.Reload() end, nil, "Reload Now", "Later") end
+		if shouldReload then UUF:CreatePrompt("Reload UI", "Aura visual settings have changed. Reload the UI now to apply them?", function() C_UI.Reload() end, nil, "Reload Now", "Later") end
 	end)
 
     local function SelectTab(GUIContainer, _, MainTab)

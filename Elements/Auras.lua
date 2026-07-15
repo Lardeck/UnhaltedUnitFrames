@@ -3,13 +3,19 @@ local _, UUF = ...
 local AuraContainerState = setmetatable({}, {__mode = "k"})
 local AuraUnitFrames = setmetatable({}, {__mode = "k"})
 local AuraEligibilityEventFrame = CreateFrame("Frame")
+local AuraBorderOptions = {
+	[false] = {showIcon = false, showWhenHarmful = false, showWhenHelpful = false, style = AuraButtonBorderStyle.Color},
+	[true] = {showIcon = false, showWhenHarmful = true, showWhenHelpful = true, style = AuraButtonBorderStyle.Color},
+}
 
 AuraEligibilityEventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
 AuraEligibilityEventFrame:RegisterEvent("PLAYER_FOCUS_CHANGED")
 AuraEligibilityEventFrame:RegisterEvent("UNIT_FACTION")
-AuraEligibilityEventFrame:SetScript("OnEvent", function(_, event)
+AuraEligibilityEventFrame:SetScript("OnEvent", function(_, event, eventUnit)
 	for unitFrame, unit in pairs(AuraUnitFrames) do
-		local update = event == "UNIT_FACTION" or event == "PLAYER_TARGET_CHANGED" and (unit == "target" or unit == "targettarget") or event == "PLAYER_FOCUS_CHANGED" and (unit == "focus" or unit == "focustarget")
+		local unitToken = unitFrame.unit
+		if not unitToken then unitToken = unit == "partyplayer" and "player" or unit end
+		local update = event == "UNIT_FACTION" and (eventUnit == "player" or unitToken == eventUnit) or event == "PLAYER_TARGET_CHANGED" and (unit == "target" or unit == "targettarget") or event == "PLAYER_FOCUS_CHANGED" and (unit == "focus" or unit == "focustarget")
 		if update then UUF:UpdateUnitAuraEligibility(unitFrame, unit) end
 	end
 end)
@@ -24,7 +30,7 @@ local function ApplyFontStyle(fontString, anchorFrame, layout, fontSize, colour)
 	fontString:ClearAllPoints()
 	fontString:SetPoint(layout[1], anchorFrame, layout[2], layout[3], layout[4])
 	fontString:SetFont(UUF.Media.Font, fontSize, FontsDB.FontFlag)
-	fontString:SetTextColor(unpack(colour))
+	if colour then fontString:SetTextColor(unpack(colour)) end
 	if FontsDB.Shadow.Enabled then
 		fontString:SetShadowColor(unpack(FontsDB.Shadow.Colour))
 		fontString:SetShadowOffset(FontsDB.Shadow.XPos, FontsDB.Shadow.YPos)
@@ -57,32 +63,34 @@ local function CreateAuraButtonBorder(button)
 	right:SetWidth(1)
 end
 
-local function ApplyAuraButtonStyle(button, buttonData, unitFrame, unit, auraKey, size)
+local function ApplyAuraButtonStyle(button, unitFrame, unit, auraKey, size)
 	local AuraDB = GetAuraDB(unitFrame, unit, auraKey)
 	if not AuraDB then return end
 	button:SetSize(size, size)
-	buttonData.Icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-	buttonData.Cooldown:SetDrawEdge(false)
-	buttonData.Cooldown:SetReverse(true)
-	buttonData.Cooldown:SetHideCountdownNumbers(true)
-	ApplyFontStyle(buttonData.Count, button, AuraDB.Count.Layout, AuraDB.Count.FontSize, AuraDB.Count.Colour)
-	buttonData.Count:SetShown(not AuraDB.Count.HideStacks)
+	button.Icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+	button.Cooldown:SetDrawEdge(false)
+	button.Cooldown:SetReverse(true)
+	button.Cooldown:SetHideCountdownNumbers(true)
+	ApplyFontStyle(button.Count, button, AuraDB.Count.Layout, AuraDB.Count.FontSize, AuraDB.Count.Colour)
+	button.Count:SetShown(not AuraDB.Count.HideStacks)
 
 	local CooldownTextDB = UUF.db.profile.General.CooldownText
 	if CooldownTextDB.Advanced then CooldownTextDB = UUF:GetUnitDB(unitFrame, unit).Auras.AuraDuration end
 	local fontSize = CooldownTextDB.FontSize
 	if CooldownTextDB.ScaleByIconSize then fontSize = math.max(CooldownTextDB.FontSize * size / 36, 1) end
-	ApplyFontStyle(buttonData.Time, button, CooldownTextDB.Layout, fontSize, {1, 1, 1, 1})
+	ApplyFontStyle(button.Time, button, CooldownTextDB.Layout, fontSize)
 
-	buttonData.Border:ClearAllPoints()
-	buttonData.Border:SetPoint("TOPLEFT", button, "TOPLEFT", 1, -1)
-	buttonData.Border:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
-	button:SetAuraBorder(buttonData.Border, {
-		showIcon = false,
-		showWhenHarmful = AuraDB.ShowType,
-		showWhenHelpful = AuraDB.ShowType,
-		style = AuraButtonBorderStyle.Color,
-	})
+	button.Border:ClearAllPoints()
+	button.Border:SetPoint("TOPLEFT", button, "TOPLEFT", 1, -1)
+	button.Border:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
+	button:SetAuraBorder(button.Border, AuraBorderOptions[AuraDB.ShowType == true])
+end
+
+local function PostCreateAuraButton(container, button)
+	local state = AuraContainerState[container]
+	if not state then return end
+	CreateAuraButtonBorder(button)
+	ApplyAuraButtonStyle(button, state.UnitFrame, state.Unit, state.AuraKey, state.Size)
 end
 
 local function AddAuraFilter(filters, auraType, source, token, exclusions)
@@ -136,17 +144,17 @@ local function GetAuraFilters(AuraDB, auraType)
 	return filters, playerTokens, otherTokens, showAllPlayer, showAllOthers
 end
 
-local function CreateAuraContainer(unitFrame, unit, auraKey)
+local function CreateAuraContainer(unitFrame, unit, auraKey, durationFormatter)
 	local AuraDB = GetAuraDB(unitFrame, unit, auraKey)
 	local container = unitFrame:CreateAuras({
 		maxWidth = AuraDB and math.max((AuraDB.Size + AuraDB.Layout[5]) * AuraDB.Wrap - AuraDB.Layout[5], 1) or 1,
 		initialAnchor = auraKey,
-		growthX = AuraDB and AuraDB.GrowthDirection or "RIGHT",
+		growthX = AuraDB and AuraDB.GrowthDirection == "LEFT" and "LEFT" or "RIGHT",
 		growthY = AuraDB and AuraDB.WrapDirection or "UP",
 	})
 	if not container then return end
 
-	local state = {Groups = {}, ActiveGroups = {}, ActiveSpellIDGroups = {}, Size = AuraDB and AuraDB.Size or 1}
+	local state = {Groups = {}, ActiveGroups = {}, ActiveSpellIDGroups = {}, Size = AuraDB and AuraDB.Size or 1, UnitFrame = unitFrame, Unit = unit, AuraKey = auraKey}
 	AuraContainerState[container] = state
 	container.size = state.Size
 	container.showCount = true
@@ -154,18 +162,8 @@ local function CreateAuraContainer(unitFrame, unit, auraKey)
 	container.showBuffBorder = true
 	container.showDebuffBorder = true
 	container.borderStyle = AuraButtonBorderStyle.Color
-	container.durationFormatter = UUF:GetCooldownDurationFormatter()
-	container.PostCreateButton = function(_, button)
-		CreateAuraButtonBorder(button)
-		local buttonData = {
-			Icon = button.Icon,
-			Cooldown = button.Cooldown,
-			Count = button.Count,
-			Time = button.Time,
-			Border = button.Border,
-		}
-		ApplyAuraButtonStyle(button, buttonData, unitFrame, unit, auraKey, state.Size)
-	end
+	container.durationFormatter = durationFormatter
+	container.PostCreateButton = PostCreateAuraButton
 	return container
 end
 
@@ -241,14 +239,16 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	local rows = math.max(math.ceil(AuraDB.Num / AuraDB.Wrap), 1)
 	local height = math.max((state.Size + AuraDB.Layout[5]) * rows - AuraDB.Layout[5], 1)
 	local anchorParent = AuraDB.AnchorParent == "Health" and unitFrame.Health or unitFrame
+	local centered = AuraDB.GrowthDirection == "CENTER"
+	local containerAnchor = centered and (AuraDB.WrapDirection == "DOWN" and "TOP" or "BOTTOM") or AuraDB.Layout[1]
+	local auraAnchor = centered and (AuraDB.WrapDirection == "DOWN" and "TOPLEFT" or "BOTTOMLEFT") or AuraDB.Layout[1]
 	container:ClearAllPoints()
-	container:SetPoint(AuraDB.Layout[1], anchorParent, AuraDB.Layout[2], AuraDB.Layout[3], AuraDB.Layout[4])
+	container:SetPoint(containerAnchor, anchorParent, AuraDB.Layout[2], AuraDB.Layout[3], AuraDB.Layout[4])
 	container:SetSize(width, height)
 	container:SetFrameStrata(UUF:GetUnitDB(unitFrame, unit).Auras.FrameStrata)
 	container:SetAuraLayoutRowWidth(width)
-	container:SetAuraLayoutAnchorPoint(AuraDB.Layout[1])
+	container:SetAuraLayoutAnchorPoint(auraAnchor)
 	container:SetAuraLayoutGrowthDirection(AuraDB.GrowthDirection == "LEFT" and -1 or 1, AuraDB.WrapDirection == "DOWN" and -1 or 1)
-	UUF:GetCooldownDurationFormatter()
 end
 
 function UUF:UpdateUnitAuraEligibility(unitFrame, unit)
@@ -283,7 +283,8 @@ function UUF:CreateUnitAuras(unitFrame, unit)
 	local AurasDB = UUF:GetUnitDB(unitFrame, unit).Auras
 	if not AurasDB then return end
 	unitFrame.AuraContainers = {}
-	for _, slot in ipairs(UUF.AURA_CONTAINER_SLOTS) do unitFrame.AuraContainers[slot.Key] = CreateAuraContainer(unitFrame, unit, slot.Key) end
+	local durationFormatter = UUF:GetCooldownDurationFormatter()
+	for _, slot in ipairs(UUF.AURA_CONTAINER_SLOTS) do unitFrame.AuraContainers[slot.Key] = CreateAuraContainer(unitFrame, unit, slot.Key, durationFormatter) end
 	AuraUnitFrames[unitFrame] = unit
 	UUF:UpdateUnitAuras(unitFrame, unit)
 end
@@ -293,6 +294,7 @@ function UUF:UpdateUnitAuras(unitFrame, unit)
 	local AurasDB = UUF:GetUnitDB(unitFrame, unit).Auras
 	if not AurasDB then return end
 	AuraUnitFrames[unitFrame] = unit
+	UUF:GetCooldownDurationFormatter()
 	for _, slot in ipairs(UUF.AURA_CONTAINER_SLOTS) do UpdateAuraContainer(unitFrame.AuraContainers and unitFrame.AuraContainers[slot.Key], unitFrame, unit, slot.Key) end
 	UUF:UpdateUnitAuraEligibility(unitFrame, unit)
 	if UUF.AURA_TEST_MODE then UUF:CreateTestAuras(unitFrame, unit) end
@@ -343,8 +345,17 @@ local function UpdateFakeAuras(container, unitFrame, unit, AuraDB, texture)
 	end
 	container:Show()
 	local anchorParent = AuraDB.AnchorParent == "Health" and unitFrame.Health or unitFrame
+	local centered = AuraDB.GrowthDirection == "CENTER"
+	local containerAnchor = centered and (AuraDB.WrapDirection == "DOWN" and "TOP" or "BOTTOM") or AuraDB.Layout[1]
+	local auraAnchor = centered and (AuraDB.WrapDirection == "DOWN" and "TOPLEFT" or "BOTTOMLEFT") or AuraDB.Layout[1]
 	container:ClearAllPoints()
-	container:SetPoint(AuraDB.Layout[1], anchorParent, AuraDB.Layout[2], AuraDB.Layout[3], AuraDB.Layout[4])
+	container:SetPoint(containerAnchor, anchorParent, AuraDB.Layout[2], AuraDB.Layout[3], AuraDB.Layout[4])
+	if centered then
+		local columns = math.min(AuraDB.Num, AuraDB.Wrap)
+		local width = math.max((AuraDB.Size + AuraDB.Layout[5]) * columns - AuraDB.Layout[5], 1)
+		local rows = math.max(math.ceil(AuraDB.Num / AuraDB.Wrap), 1)
+		container:SetSize(width, math.max((AuraDB.Size + AuraDB.Layout[5]) * rows - AuraDB.Layout[5], 1))
+	end
 	container:SetFrameStrata(UUF:GetUnitDB(unitFrame, unit).Auras.FrameStrata)
 	for index = 1, AuraDB.Num do
 		local button = container["fake" .. index]
@@ -364,7 +375,7 @@ local function UpdateFakeAuras(container, unitFrame, unit, AuraDB, texture)
 		local y = row * (AuraDB.Size + AuraDB.Layout[5]) * (AuraDB.WrapDirection == "DOWN" and -1 or 1)
 		button:SetSize(AuraDB.Size, AuraDB.Size)
 		button:ClearAllPoints()
-		button:SetPoint(AuraDB.Layout[1], container, AuraDB.Layout[1], x, y)
+		button:SetPoint(auraAnchor, container, auraAnchor, x, y)
 		button.Icon:SetTexture(texture)
 		button.Icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 		ApplyFontStyle(button.Count, button, AuraDB.Count.Layout, AuraDB.Count.FontSize, AuraDB.Count.Colour)
@@ -374,7 +385,7 @@ local function UpdateFakeAuras(container, unitFrame, unit, AuraDB, texture)
 		if CooldownTextDB.Advanced then CooldownTextDB = UUF:GetUnitDB(unitFrame, unit).Auras.AuraDuration end
 		local fontSize = CooldownTextDB.FontSize
 		if CooldownTextDB.ScaleByIconSize then fontSize = math.max(CooldownTextDB.FontSize * AuraDB.Size / 36, 1) end
-		ApplyFontStyle(button.Duration, button, CooldownTextDB.Layout, fontSize, {1, 1, 1, 1})
+		ApplyFontStyle(button.Duration, button, CooldownTextDB.Layout, fontSize)
 		button.Duration:SetText("10m")
 		button:Show()
 	end

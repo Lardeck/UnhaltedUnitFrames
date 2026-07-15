@@ -19,10 +19,12 @@ DispelCapabilityEventFrame:RegisterEvent("PLAYER_TALENT_UPDATE")
 DispelCapabilityEventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
 DispelCapabilityEventFrame:RegisterEvent("PLAYER_FOCUS_CHANGED")
 DispelCapabilityEventFrame:RegisterEvent("UNIT_FACTION")
-DispelCapabilityEventFrame:SetScript("OnEvent", function(_, event)
+DispelCapabilityEventFrame:SetScript("OnEvent", function(_, event, eventUnit)
 	for unitFrame, state in pairs(DispelHighlightState) do
 		local unit = state.Unit
-		local update = event == "SPELLS_CHANGED" or event == "PLAYER_TALENT_UPDATE" or event == "UNIT_FACTION" or event == "PLAYER_TARGET_CHANGED" and unit == "target" or event == "PLAYER_FOCUS_CHANGED" and unit == "focus"
+		local unitToken = unitFrame.unit
+		if not unitToken then unitToken = unit == "partyplayer" and "player" or unit end
+		local update = event == "SPELLS_CHANGED" or event == "PLAYER_TALENT_UPDATE" or event == "UNIT_FACTION" and (eventUnit == "player" or unitToken == eventUnit) or event == "PLAYER_TARGET_CHANGED" and unit == "target" or event == "PLAYER_FOCUS_CHANGED" and unit == "focus"
 		if update then UUF:UpdateUnitDispelHighlight(unitFrame, unit) end
 	end
 end)

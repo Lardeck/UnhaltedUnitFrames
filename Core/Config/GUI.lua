@@ -5,6 +5,7 @@ local GUIWidgets = UUF.GUIWidgets
 local UUFGUI = {}
 local isGUIOpen = false
 local reloadRequired = false
+local AdditionalSpellIDsTooltip = "|cFF8080FFBuffs|r can only be filtered on |cFF40FF40Friendly|r Units.\n|cFF8080FFDebuffs|r can only be filtered on |cFFFF4040Unfriendly|r Units.\n|cFF8080FFLeft-Click|r on any existing |cFF8080FFSpellID|r to remove it from the list.\n|cFF8080FFFilters|r & |cFF8080FFSpellIDs|r can be used in combination."
 -- Stores last selected tabs: [unit] = { mainTab = "CastBar", subTabs = { CastBar = "Bar" } }
 local lastSelectedUnitTabs = {}
 
@@ -3429,7 +3430,18 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraSlot, refre
         FilterContainer:AddChild(FilterDropdown)
     end
 
-    local SpellIDContainer = GUIWidgets.CreateInlineGroup(SettingsTabs, "Additional Spell IDs")
+    local SpellIDContainer = GUIWidgets.CreateInlineGroup(SettingsTabs, "SpellID Filters")
+	local SpellIDInformation = AG:Create("InteractiveLabel")
+	SpellIDInformation:SetText(UUF.INFOBUTTON)
+	SpellIDInformation:SetWidth(24)
+	SpellIDInformation.frame:SetParent(SpellIDContainer.frame)
+	SpellIDInformation.frame:ClearAllPoints()
+	SpellIDInformation.frame:SetPoint("TOPLEFT", SpellIDContainer.frame, "TOPLEFT", 18 + SpellIDContainer.titletext:GetStringWidth(), -3)
+	SpellIDInformation.frame:Show()
+	SpellIDInformation:SetCallback("OnEnter", function() GameTooltip:SetOwner(SpellIDInformation.frame, "ANCHOR_CURSOR_RIGHT") GameTooltip:AddLine(AdditionalSpellIDsTooltip, 1, 1, 1, false) GameTooltip:Show() end)
+	SpellIDInformation:SetCallback("OnLeave", function() GameTooltip:Hide() end)
+	SpellIDContainer:SetCallback("OnRelease", function() GameTooltip:Hide() AG:Release(SpellIDInformation) end)
+
 	local SpellIDEditBox = AG:Create("EditBox")
 	SpellIDEditBox:SetLabel("Add SpellID")
 	SpellIDEditBox:DisableButton(true)

@@ -4,6 +4,7 @@ local AG = UUF.AG
 local GUIWidgets = UUF.GUIWidgets
 local UUFGUI = {}
 local isGUIOpen = false
+local reloadRequired = false
 -- Stores last selected tabs: [unit] = { mainTab = "CastBar", subTabs = { CastBar = "Bar" } }
 local lastSelectedUnitTabs = {}
 
@@ -368,7 +369,7 @@ local function CreateFontSettings(containerParent)
     FontDropdown:SetLabel("Font")
     FontDropdown:SetValue(UUF.db.profile.General.Fonts.Font)
     FontDropdown:SetRelativeWidth(0.5)
-	FontDropdown:SetCallback("OnValueChanged", function(widget, _, value) widget:SetValue(value) UUF.db.profile.General.Fonts.Font = value UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
+	FontDropdown:SetCallback("OnValueChanged", function(widget, _, value) widget:SetValue(value) UUF.db.profile.General.Fonts.Font = value reloadRequired = true UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
     Container:AddChild(FontDropdown)
 
     local FontFlagDropdown = AG:Create("Dropdown")
@@ -376,7 +377,7 @@ local function CreateFontSettings(containerParent)
     FontFlagDropdown:SetLabel("Font Flag")
     FontFlagDropdown:SetValue(UUF.db.profile.General.Fonts.FontFlag)
     FontFlagDropdown:SetRelativeWidth(0.5)
-	FontFlagDropdown:SetCallback("OnValueChanged", function(widget, _, value) widget:SetValue(value) UUF.db.profile.General.Fonts.FontFlag = value UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
+	FontFlagDropdown:SetCallback("OnValueChanged", function(widget, _, value) widget:SetValue(value) UUF.db.profile.General.Fonts.FontFlag = value reloadRequired = true UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
     Container:AddChild(FontFlagDropdown)
 
     local SimpleGroup = AG:Create("SimpleGroup")
@@ -390,7 +391,7 @@ local function CreateFontSettings(containerParent)
     Toggle:SetLabel("Enable Font Shadows")
     Toggle:SetValue(UUF.db.profile.General.Fonts.Shadow.Enabled)
     Toggle:SetFullWidth(true)
-	Toggle:SetCallback("OnValueChanged", function(_, _, value) UUF.db.profile.General.Fonts.Shadow.Enabled = value UUF:ResolveLSM() GUIWidgets.DeepDisable(SimpleGroup, not UUF.db.profile.General.Fonts.Shadow.Enabled, Toggle) UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
+	Toggle:SetCallback("OnValueChanged", function(_, _, value) UUF.db.profile.General.Fonts.Shadow.Enabled = value reloadRequired = true UUF:ResolveLSM() GUIWidgets.DeepDisable(SimpleGroup, not UUF.db.profile.General.Fonts.Shadow.Enabled, Toggle) UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
     Toggle:SetRelativeWidth(0.5)
     SimpleGroup:AddChild(Toggle)
 
@@ -398,7 +399,7 @@ local function CreateFontSettings(containerParent)
     ColorPicker:SetLabel("Colour")
     ColorPicker:SetColor(unpack(UUF.db.profile.General.Fonts.Shadow.Colour))
     ColorPicker:SetFullWidth(true)
-	ColorPicker:SetCallback("OnValueChanged", function(_, _, r, g, b, a) UUF.db.profile.General.Fonts.Shadow.Colour = {r, g, b, a} UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
+	ColorPicker:SetCallback("OnValueChanged", function(_, _, r, g, b, a) UUF.db.profile.General.Fonts.Shadow.Colour = {r, g, b, a} reloadRequired = true UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
     ColorPicker:SetRelativeWidth(0.5)
     SimpleGroup:AddChild(ColorPicker)
 
@@ -407,7 +408,7 @@ local function CreateFontSettings(containerParent)
     XSlider:SetValue(UUF.db.profile.General.Fonts.Shadow.XPos)
     XSlider:SetSliderValues(-5, 5, 1)
     XSlider:SetFullWidth(true)
-	XSlider:SetCallback("OnValueChanged", function(_, _, value) UUF.db.profile.General.Fonts.Shadow.XPos = value UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
+	XSlider:SetCallback("OnValueChanged", function(_, _, value) UUF.db.profile.General.Fonts.Shadow.XPos = value reloadRequired = true UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
     XSlider:SetRelativeWidth(0.5)
     SimpleGroup:AddChild(XSlider)
 
@@ -416,7 +417,7 @@ local function CreateFontSettings(containerParent)
     YSlider:SetValue(UUF.db.profile.General.Fonts.Shadow.YPos)
     YSlider:SetSliderValues(-5, 5, 1)
     YSlider:SetFullWidth(true)
-	YSlider:SetCallback("OnValueChanged", function(_, _, value) UUF.db.profile.General.Fonts.Shadow.YPos = value UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
+	YSlider:SetCallback("OnValueChanged", function(_, _, value) UUF.db.profile.General.Fonts.Shadow.YPos = value reloadRequired = true UUF:ResolveLSM() UUF:UpdateAllUnitFrames() UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
     YSlider:SetRelativeWidth(0.5)
     SimpleGroup:AddChild(YSlider)
 
@@ -582,7 +583,7 @@ local function CreateColourSettings(containerParent)
 
     local ResetAllColoursButton = AG:Create("Button")
     ResetAllColoursButton:SetText("All Colours")
-    ResetAllColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours, UUF.db.profile.General.Colours) UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() Container:ReleaseChildren() CreateColourSettings(containerParent) Container:DoLayout() containerParent:DoLayout() end)
+    ResetAllColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours, UUF.db.profile.General.Colours) reloadRequired = true UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() Container:ReleaseChildren() CreateColourSettings(containerParent) Container:DoLayout() containerParent:DoLayout() end)
     ResetAllColoursButton:SetRelativeWidth(1)
     Container:AddChild(ResetAllColoursButton)
 
@@ -606,7 +607,7 @@ local function CreateColourSettings(containerParent)
 
     local ResetDispelColoursButton = AG:Create("Button")
     ResetDispelColoursButton:SetText("Dispel Colours")
-    ResetDispelColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.Dispel, UUF.db.profile.General.Colours.Dispel) Container:ReleaseChildren() CreateColourSettings(containerParent) Container:DoLayout() containerParent:DoLayout() end)
+    ResetDispelColoursButton:SetCallback("OnClick", function() UUF:CopyTable(UUF:GetDefaultDB().profile.General.Colours.Dispel, UUF.db.profile.General.Colours.Dispel) reloadRequired = true Container:ReleaseChildren() CreateColourSettings(containerParent) Container:DoLayout() containerParent:DoLayout() end)
     ResetDispelColoursButton:SetRelativeWidth(0.33)
     Container:AddChild(ResetDispelColoursButton)
 
@@ -710,7 +711,7 @@ local function CreateColourSettings(containerParent)
         DispelColourPicker:SetLabel(dispelType)
         local R, G, B = unpack(UUF.db.profile.General.Colours.Dispel[dispelType])
         DispelColourPicker:SetColor(R, G, B)
-        DispelColourPicker:SetCallback("OnValueChanged", function(widget, _, r, g, b) UUF.db.profile.General.Colours.Dispel[dispelType] = {r, g, b} UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() end)
+        DispelColourPicker:SetCallback("OnValueChanged", function(widget, _, r, g, b) UUF.db.profile.General.Colours.Dispel[dispelType] = {r, g, b} reloadRequired = true UUF:LoadCustomColours() UUF:UpdateAllUnitFrames() end)
         DispelColourPicker:SetHasAlpha(false)
         DispelColourPicker:SetRelativeWidth(0.2)
         Container:AddChild(DispelColourPicker)
@@ -1066,7 +1067,7 @@ local function CreateFrameSettings(containerParent, unit, unitHasParent, updateC
         DispelHighlightStyleDropdown:SetLabel("Highlight Style")
         DispelHighlightStyleDropdown:SetValue(HealthBarDB.DispelHighlight.Style)
         DispelHighlightStyleDropdown:SetRelativeWidth(0.5)
-        DispelHighlightStyleDropdown:SetCallback("OnValueChanged", function(_, _, value) HealthBarDB.DispelHighlight.Style = value updateCallback("HealthBar") end)
+        DispelHighlightStyleDropdown:SetCallback("OnValueChanged", function(_, _, value) HealthBarDB.DispelHighlight.Style = value reloadRequired = true updateCallback("HealthBar") end)
         DispelHighlightContainer:AddChild(DispelHighlightStyleDropdown)
     end
 end
@@ -3357,115 +3358,134 @@ local function CreateTagsSettings(containerParent, unit)
     containerParent:DoLayout()
 end
 
-local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
-    local AuraDB = GetUnitDB(unit).Auras[auraDB]
-    local isCustom = auraDB == "Custom"
-    local filterAuraDB = auraDB == "Custom" and (AuraDB.Type == "Debuffs" and "Debuffs" or "Buffs") or auraDB
-    local auraTitle = auraDB == "Custom" and filterAuraDB or auraDB
+local function CreateSpecificAuraSettings(containerParent, unit, auraSlot, refreshSettings)
+    local AuraDB = GetUnitDB(unit).Auras.Containers[auraSlot]
+    local auraTitle = AuraDB.Type
     local function UpdateAuras()
-        UpdateUnitSettings(unit, function() UUF:UpdateUnitAuras(UUF[unit:upper()], unit, auraDB) end, "Auras")
+        UpdateUnitSettings(unit, function() UUF:UpdateUnitAuras(UUF[unit:upper()], unit) end, "Auras")
     end
 
-    local AuraContainer = GUIWidgets.CreateInlineGroup(containerParent, auraTitle .. " Settings")
-
-    local Toggle = AG:Create("CheckBox")
-    Toggle:SetLabel("Enable |cFF8080FF"..auraDB.."|r")
-    Toggle:SetValue(AuraDB.Enabled)
-    Toggle:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Enabled = value UpdateAuras() RefreshAuraGUI() end)
-    Toggle:SetRelativeWidth(isCustom and 0.5 or 0.33)
-    AuraContainer:AddChild(Toggle)
-
-    if auraDB == "Custom" then
-        local TypeDropdown = AG:Create("Dropdown")
-        TypeDropdown:SetList({["Buffs"] = "Buffs", ["Debuffs"] = "Debuffs"}, {"Buffs", "Debuffs"})
-        TypeDropdown:SetLabel("Type")
-        TypeDropdown:SetValue(filterAuraDB)
-        TypeDropdown:SetRelativeWidth(isCustom and 0.5 or 0.33)
-        TypeDropdown:SetCallback("OnValueChanged", function(_, _, value)
-            AuraDB.Type = value
-            AuraDB.Filter = value == "Buffs" and "HELPFUL" or "HARMFUL"
-            UpdateAuras()
-            containerParent:ReleaseChildren()
-            CreateSpecificAuraSettings(containerParent, unit, auraDB)
-            containerParent:DoLayout()
-        end)
-        AuraContainer:AddChild(TypeDropdown)
-    end
-
-    local OnlyShowPlayerToggle = AG:Create("CheckBox")
-    OnlyShowPlayerToggle:SetLabel("Only Show Player " .. auraTitle)
-    OnlyShowPlayerToggle:SetValue(AuraDB.OnlyShowPlayer)
-    OnlyShowPlayerToggle:SetCallback("OnValueChanged", function(_, _, value) AuraDB.OnlyShowPlayer = value UpdateAuras() RefreshAuraGUI() end)
-    OnlyShowPlayerToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(OnlyShowPlayerToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine("Overrides |cFF8080FF" .. auraTitle:lower() .. "|r advanced filters. If |cFF8080FFBlacklist|r is checked, it will be respected.", 1, 1, 1, true) GameTooltip:Show() end)
-    OnlyShowPlayerToggle:SetCallback("OnLeave", function() GameTooltip:Hide() end)
-    OnlyShowPlayerToggle:SetRelativeWidth(isCustom and 0.5 or 0.33)
-    AuraContainer:AddChild(OnlyShowPlayerToggle)
+    local AuraContainer = GUIWidgets.CreateInlineGroup(containerParent, UUF.AURA_CONTAINER_SLOT_NAMES[auraSlot] .. " — " .. auraTitle)
+    local TypeDropdown = AG:Create("Dropdown")
+    TypeDropdown:SetList({["Buffs"] = "Buffs", ["Debuffs"] = "Debuffs"}, {"Buffs", "Debuffs"})
+    TypeDropdown:SetLabel("Container Type")
+    TypeDropdown:SetValue(AuraDB.Type)
+    TypeDropdown:SetRelativeWidth(0.5)
+    TypeDropdown:SetCallback("OnValueChanged", function(_, _, value)
+        AuraDB.Type = value
+        UpdateAuras()
+		refreshSettings()
+    end)
+    AuraContainer:AddChild(TypeDropdown)
 
     local ShowTypeCheckbox = AG:Create("CheckBox")
     ShowTypeCheckbox:SetLabel("Show " .. auraTitle .. " Type Border")
     ShowTypeCheckbox:SetValue(AuraDB.ShowType)
-    ShowTypeCheckbox:SetCallback("OnValueChanged", function(_, _, value) AuraDB.ShowType = value UpdateAuras() end)
-    ShowTypeCheckbox:SetRelativeWidth(isCustom and 0.5 or 0.33)
+    ShowTypeCheckbox:SetCallback("OnValueChanged", function(_, _, value) AuraDB.ShowType = value reloadRequired = true UpdateAuras() end)
+    ShowTypeCheckbox:SetRelativeWidth(0.5)
     AuraContainer:AddChild(ShowTypeCheckbox)
 
-    local FilterContainer = GUIWidgets.CreateInlineGroup(containerParent, auraTitle .. " Filters")
-    AuraDB.Filters = AuraDB.Filters or {}
+	local selectedSettingsTab = GetSavedSubTab(unit, "AuraContainerSettings", "Filters")
+	local SettingsTabs = AG:Create("TabGroup")
+	SettingsTabs:SetLayout("Flow")
+	SettingsTabs:SetFullWidth(true)
+	SettingsTabs:SetTabs({
+		{text = "Filters", value = "Filters"},
+		{text = "Layout & Positioning", value = "Layout"},
+		{text = "Count", value = "Count"},
+	})
+	SettingsTabs:SelectTab(selectedSettingsTab)
+	SettingsTabs:SetCallback("OnGroupSelected", function(_, _, value) SaveSubTab(unit, "AuraContainerSettings", value) refreshSettings() end)
+	containerParent:AddChild(SettingsTabs)
 
-    local BlacklistToggle = AG:Create("CheckBox")
-    BlacklistToggle:SetLabel("Blacklist")
-    BlacklistToggle:SetValue(AuraDB.Blacklist or false)
-    BlacklistToggle:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Blacklist = value UpdateAuras() end)
-    BlacklistToggle:SetRelativeWidth(auraDB == "Debuffs" and 0.33 or 0.5)
-    FilterContainer:AddChild(BlacklistToggle)
-
-    local FilterDropdowns = {}
-
-    for _, filter in ipairs(UUF.AURA_FILTERS[filterAuraDB]) do
-        if filter.Group == "General" then
-            local filterKey = filter.Key
-            local FilterToggle = AG:Create("CheckBox")
-            FilterToggle:SetLabel(filter.Title)
-            FilterToggle:SetValue(AuraDB.Filters[filterKey] or false)
-            FilterToggle:SetRelativeWidth(0.33)
-            FilterToggle:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Filters[filterKey] = value or nil UpdateAuras() RefreshAuraGUI() end)
-            FilterToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(FilterToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine(filter.Desc, 1, 1, 1, true) GameTooltip:Show() end)
-            FilterToggle:SetCallback("OnLeave", function() GameTooltip:Hide() end)
-            FilterContainer:AddChild(FilterToggle)
-        end
-    end
-
-    GUIWidgets.CreateInformationTag(FilterContainer, "Dropdowns support |cFF8080FFmultiple selections|r. |cFFFFCC00Player|r is specifically you, where |cFFFFCC00Others|r are all other players/units.")
-
+	if selectedSettingsTab == "Filters" then
+    local FilterContainer = GUIWidgets.CreateInlineGroup(SettingsTabs, auraTitle .. " Filters")
+    GUIWidgets.CreateInformationTag(FilterContainer, "Filters support |cFF8080FFmultiple selections|r.")
     for _, filterGroup in ipairs({"Player (You)", "Others (Not You)"}) do
         local filterList = {}
-        local filterDesc = {}
         local filterOrder = {}
+        local filterDescriptions = {}
         local FilterDropdown = AG:Create("Dropdown")
-        for _, filter in ipairs(UUF.AURA_FILTERS[filterAuraDB]) do
+        for _, filter in ipairs(UUF.AURA_FILTERS) do
             if filter.Group == filterGroup then
                 filterList[filter.Key] = filter.Title
-                filterDesc[filter.Key] = filter.Desc
                 filterOrder[#filterOrder + 1] = filter.Key
+                filterDescriptions[filter.Key] = filter.Desc
             end
         end
         FilterDropdown:SetLabel(filterGroup .. " Filters")
         FilterDropdown:SetMultiselect(true)
         FilterDropdown:SetList(filterList, filterOrder)
-        for _, dropdownItem in FilterDropdown.pullout:IterateItems() do
-            local desc = filterDesc[dropdownItem.userdata and dropdownItem.userdata.value]
-            if desc then
-                dropdownItem:SetCallback("OnEnter", function() GameTooltip:SetOwner(dropdownItem.frame, "ANCHOR_CURSOR_RIGHT") GameTooltip:SetFrameStrata("TOOLTIP") GameTooltip:SetFrameLevel((FilterDropdown.pullout.frame:GetFrameLevel() or 0) + 100) GameTooltip:SetToplevel(true) GameTooltip:AddLine(desc, 1, 1, 1, false) GameTooltip:Show() GameTooltip:SetFrameLevel((FilterDropdown.pullout.frame:GetFrameLevel() or 0) + 100) end)
-                dropdownItem:SetCallback("OnLeave", function() GameTooltip:Hide() end)
-            end
-        end
         for _, filterKey in ipairs(filterOrder) do FilterDropdown:SetItemValue(filterKey, AuraDB.Filters[filterKey] or false) end
         FilterDropdown:SetRelativeWidth(0.5)
         FilterDropdown:SetCallback("OnValueChanged", function(_, _, filterKey, value) AuraDB.Filters[filterKey] = value or nil UpdateAuras() end)
+        for _, dropdownItem in FilterDropdown.pullout:IterateItems() do
+            local desc = filterDescriptions[dropdownItem.userdata and dropdownItem.userdata.value]
+            if desc then
+                dropdownItem:SetCallback("OnEnter", function() GameTooltip:SetOwner(dropdownItem.frame, "ANCHOR_CURSOR_RIGHT") GameTooltip:SetFrameStrata("TOOLTIP") GameTooltip:SetFrameLevel((FilterDropdown.pullout.frame:GetFrameLevel() or 0) + 100) GameTooltip:SetToplevel(true) GameTooltip:AddLine(desc, 1, 1, 1, true) GameTooltip:Show() GameTooltip:SetFrameLevel((FilterDropdown.pullout.frame:GetFrameLevel() or 0) + 100) end)
+                dropdownItem:SetCallback("OnLeave", function() GameTooltip:Hide() end)
+            end
+        end
         FilterContainer:AddChild(FilterDropdown)
-        FilterDropdowns[#FilterDropdowns + 1] = FilterDropdown
     end
 
-    local LayoutContainer = GUIWidgets.CreateInlineGroup(containerParent, "Layout & Positioning")
+    local SpellIDContainer = GUIWidgets.CreateInlineGroup(SettingsTabs, "Additional Spell IDs")
+	local SpellIDEditBox = AG:Create("EditBox")
+	SpellIDEditBox:SetLabel("Add SpellID")
+	SpellIDEditBox:DisableButton(true)
+	SpellIDEditBox:SetRelativeWidth(0.35)
+	SpellIDContainer:AddChild(SpellIDEditBox)
+
+	local SpellIDDropdown = AG:Create("Dropdown")
+	SpellIDDropdown:SetLabel("Added Spells")
+	SpellIDDropdown:SetRelativeWidth(0.65)
+	SpellIDContainer:AddChild(SpellIDDropdown)
+
+	local configuredSpellIDs = AuraDB.SpellIDs
+	local function RefreshSpellIDDropdown()
+		local spellList = {}
+		local spellOrder = {}
+		for spellID in pairs(configuredSpellIDs) do
+			local spellInfo = C_Spell.GetSpellInfo(spellID)
+			local spellName = spellInfo and spellInfo.name or "Unknown Spell"
+			local iconID = spellInfo and spellInfo.iconID or 134400
+			spellList[spellID] = ("|T%d:16:16:0:0|t %s - |cFF808080%d|r"):format(iconID, spellName, spellID)
+			spellOrder[#spellOrder + 1] = spellID
+		end
+		table.sort(spellOrder)
+		SpellIDDropdown:SetList(spellList, spellOrder)
+		SpellIDDropdown:SetValue(nil)
+		SpellIDDropdown:SetText(spellList[spellOrder[1]] or "")
+		SpellIDDropdown:SetDisabled(#spellOrder == 0)
+	end
+
+	SpellIDEditBox:SetCallback("OnEnterPressed", function(widget, _, value)
+		local spellID = tostring(value or ""):match("^%s*(%d+)%s*$")
+		spellID = spellID and tonumber(spellID)
+		if not spellID or spellID <= 0 or spellID > 2147483647 then return true end
+		local spellInfo = C_Spell.GetSpellInfo(spellID)
+		if not spellInfo or not spellInfo.name then			return true end
+
+		if configuredSpellIDs[spellID] then return true end
+
+		configuredSpellIDs[spellID] = true
+		RefreshSpellIDDropdown()
+		UpdateAuras()
+		widget:SetText("")
+		widget:ClearFocus()
+	end)
+
+	SpellIDDropdown:SetCallback("OnValueChanged", function(_, _, spellID)
+		local spellInfo = C_Spell.GetSpellInfo(spellID)
+		local spellName = spellInfo and spellInfo.name or "Unknown Spell"
+		local iconID = spellInfo and spellInfo.iconID or 134400
+		UUF:CreatePrompt("Remove SpellID", "Remove |T" .. iconID .. ":16:16:0:0|t |cFF8080FF" .. spellName .. "|r (" .. spellID .. ") from this container?", function() configuredSpellIDs[spellID] = nil RefreshSpellIDDropdown() UpdateAuras() end, function() RefreshSpellIDDropdown() end, "Remove")
+	end)
+
+	RefreshSpellIDDropdown()
+
+	elseif selectedSettingsTab == "Layout" then
+    local LayoutContainer = GUIWidgets.CreateInlineGroup(SettingsTabs, "Layout & Positioning")
 
 	local AnchorParentDropdown = AG:Create("Dropdown")
 	AnchorParentDropdown:SetList(AuraAnchorParents[1], AuraAnchorParents[2])
@@ -3475,29 +3495,24 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
 	AnchorParentDropdown:SetCallback("OnValueChanged", function(_, _, value) AuraDB.AnchorParent = value UpdateAuras() end)
 	LayoutContainer:AddChild(AnchorParentDropdown)
 
-    local AnchorFromDropdown = AG:Create("Dropdown")
-    AnchorFromDropdown:SetList(AnchorPoints[1], AnchorPoints[2])
-    AnchorFromDropdown:SetLabel("Anchor From")
-    AnchorFromDropdown:SetValue(AuraDB.Layout[1])
-    AnchorFromDropdown:SetRelativeWidth(0.25)
-    AnchorFromDropdown:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Layout[1] = value UpdateAuras() end)
-    LayoutContainer:AddChild(AnchorFromDropdown)
+	local AnchorFromDropdown = AG:Create("Dropdown")
+	AnchorFromDropdown:SetList(AnchorPoints[1], AnchorPoints[2])
+	AnchorFromDropdown:SetLabel("Anchor From")
+	AnchorFromDropdown:SetValue(AuraDB.Layout[1])
+	AnchorFromDropdown:SetRelativeWidth(0.25)
+	AnchorFromDropdown:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Layout[1] = value UpdateAuras() end)
+	LayoutContainer:AddChild(AnchorFromDropdown)
 
-    local AnchorToDropdown = AG:Create("Dropdown")
-    AnchorToDropdown:SetList(AnchorPoints[1], AnchorPoints[2])
-    AnchorToDropdown:SetLabel("Anchor To")
-    AnchorToDropdown:SetValue(AuraDB.Layout[2])
-    AnchorToDropdown:SetRelativeWidth(0.25)
-    AnchorToDropdown:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Layout[2] = value UpdateAuras() end)
-    LayoutContainer:AddChild(AnchorToDropdown)
+	local AnchorToDropdown = AG:Create("Dropdown")
+	AnchorToDropdown:SetList(AnchorPoints[1], AnchorPoints[2])
+	AnchorToDropdown:SetLabel("Anchor To")
+	AnchorToDropdown:SetValue(AuraDB.Layout[2])
+	AnchorToDropdown:SetRelativeWidth(0.25)
+	AnchorToDropdown:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Layout[2] = value UpdateAuras() end)
+	LayoutContainer:AddChild(AnchorToDropdown)
 
     local SortingDropdown = AG:Create("Dropdown")
-    SortingDropdown:SetList({
-        BLIZZARD = "Blizzard",
-        BLIZZARD_REVERSED = "Blizzard Reversed",
-        DURATION = "Duration",
-        DURATION_REVERSED = "Duration Reversed",
-    }, {"BLIZZARD", "BLIZZARD_REVERSED", "DURATION", "DURATION_REVERSED"})
+    SortingDropdown:SetList({ BLIZZARD = "Blizzard", BLIZZARD_REVERSED = "Blizzard Reversed", DURATION = "Duration", DURATION_REVERSED = "Duration Reversed", }, {"BLIZZARD", "BLIZZARD_REVERSED", "DURATION", "DURATION_REVERSED"})
     SortingDropdown:SetLabel("Aura Sorting")
     SortingDropdown:SetValue(AuraDB.Sorting or "BLIZZARD")
     SortingDropdown:SetRelativeWidth(0.25)
@@ -3536,7 +3551,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     SizeSlider:SetValue(AuraDB.Size)
     SizeSlider:SetSliderValues(8, 64, 1)
     SizeSlider:SetRelativeWidth(0.25)
-    SizeSlider:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Size = value UpdateAuras() end)
+    SizeSlider:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Size = value reloadRequired = true UpdateAuras() end)
     LayoutContainer:AddChild(SizeSlider)
 
     local SpacingSlider = AG:Create("Slider")
@@ -3550,7 +3565,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     GUIWidgets.CreateHeader(LayoutContainer, "Layout")
 
     local NumAurasSlider = AG:Create("Slider")
-    NumAurasSlider:SetLabel(auraTitle .. " To Display")
+    NumAurasSlider:SetLabel(auraTitle .. " Per Filter")
     NumAurasSlider:SetValue(AuraDB.Num)
     NumAurasSlider:SetSliderValues(1, 24, 1)
     NumAurasSlider:SetRelativeWidth(0.5)
@@ -3581,12 +3596,13 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     WrapDirectionDropdown:SetCallback("OnValueChanged", function(_, _, value) AuraDB.WrapDirection = value UpdateAuras() end)
     LayoutContainer:AddChild(WrapDirectionDropdown)
 
-    local CountContainer = GUIWidgets.CreateInlineGroup(containerParent, "Count Settings")
+	elseif selectedSettingsTab == "Count" then
+    local CountContainer = GUIWidgets.CreateInlineGroup(SettingsTabs, "Count Settings")
 
     local ColourPicker = AG:Create("ColorPicker")
     ColourPicker:SetLabel("Colour")
     ColourPicker:SetColor(AuraDB.Count.Colour[1], AuraDB.Count.Colour[2], AuraDB.Count.Colour[3], 1)
-    ColourPicker:SetCallback("OnValueChanged", function(_, _, r, g, b) AuraDB.Count.Colour = {r, g, b} UpdateAuras() end)
+    ColourPicker:SetCallback("OnValueChanged", function(_, _, r, g, b) AuraDB.Count.Colour = {r, g, b} reloadRequired = true UpdateAuras() end)
     ColourPicker:SetHasAlpha(false)
     ColourPicker:SetRelativeWidth(0.5)
     CountContainer:AddChild(ColourPicker)
@@ -3595,7 +3611,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     HideStacksToggle:SetLabel("Hide Stacks")
     HideStacksToggle:SetValue(AuraDB.Count.HideStacks or false)
     HideStacksToggle:SetRelativeWidth(0.5)
-    HideStacksToggle:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Count.HideStacks = value UpdateAuras() RefreshAuraGUI() end)
+    HideStacksToggle:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Count.HideStacks = value reloadRequired = true UpdateAuras() GUIWidgets.DeepDisable(CountContainer, value, HideStacksToggle) end)
     CountContainer:AddChild(HideStacksToggle)
 
     local CountAnchorFromDropdown = AG:Create("Dropdown")
@@ -3603,7 +3619,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     CountAnchorFromDropdown:SetLabel("Anchor From")
     CountAnchorFromDropdown:SetValue(AuraDB.Count.Layout[1])
     CountAnchorFromDropdown:SetRelativeWidth(0.5)
-    CountAnchorFromDropdown:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Count.Layout[1] = value UpdateAuras() end)
+    CountAnchorFromDropdown:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Count.Layout[1] = value reloadRequired = true UpdateAuras() end)
     CountContainer:AddChild(CountAnchorFromDropdown)
 
     local CountAnchorToDropdown = AG:Create("Dropdown")
@@ -3611,7 +3627,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     CountAnchorToDropdown:SetLabel("Anchor To")
     CountAnchorToDropdown:SetValue(AuraDB.Count.Layout[2])
     CountAnchorToDropdown:SetRelativeWidth(0.5)
-    CountAnchorToDropdown:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Count.Layout[2] = value UpdateAuras() end)
+    CountAnchorToDropdown:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Count.Layout[2] = value reloadRequired = true UpdateAuras() end)
     CountContainer:AddChild(CountAnchorToDropdown)
 
     local CountXPosSlider = AG:Create("Slider")
@@ -3619,7 +3635,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     CountXPosSlider:SetValue(AuraDB.Count.Layout[3])
     CountXPosSlider:SetSliderValues(-3000, 3000, 0.1)
     CountXPosSlider:SetRelativeWidth(0.33)
-    CountXPosSlider:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Count.Layout[3] = value UpdateAuras() end)
+    CountXPosSlider:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Count.Layout[3] = value reloadRequired = true UpdateAuras() end)
     CountContainer:AddChild(CountXPosSlider)
 
     local CountYPosSlider = AG:Create("Slider")
@@ -3627,7 +3643,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     CountYPosSlider:SetValue(AuraDB.Count.Layout[4])
     CountYPosSlider:SetSliderValues(-3000, 3000, 0.1)
     CountYPosSlider:SetRelativeWidth(0.33)
-    CountYPosSlider:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Count.Layout[4] = value UpdateAuras() end)
+    CountYPosSlider:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Count.Layout[4] = value reloadRequired = true UpdateAuras() end)
     CountContainer:AddChild(CountYPosSlider)
 
     local FontSizeSlider = AG:Create("Slider")
@@ -3635,180 +3651,16 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraDB)
     FontSizeSlider:SetValue(AuraDB.Count.FontSize)
     FontSizeSlider:SetSliderValues(8, 64, 1)
     FontSizeSlider:SetRelativeWidth(0.33)
-    FontSizeSlider:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Count.FontSize = value UpdateAuras() end)
+    FontSizeSlider:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Count.FontSize = value reloadRequired = true UpdateAuras() end)
     CountContainer:AddChild(FontSizeSlider)
 
-    function RefreshAuraGUI()
-        if AuraDB.Enabled then
-            GUIWidgets.DeepDisable(AuraContainer, false, Toggle)
-            GUIWidgets.DeepDisable(FilterContainer, AuraDB.OnlyShowPlayer, BlacklistToggle)
-            for _, FilterDropdown in ipairs(FilterDropdowns) do FilterDropdown:SetDisabled(AuraDB.OnlyShowPlayer or (filterAuraDB == "Debuffs" and AuraDB.Filters.Typed)) end
-            GUIWidgets.DeepDisable(LayoutContainer, false, Toggle)
-            GUIWidgets.DeepDisable(CountContainer, AuraDB.Count.HideStacks, HideStacksToggle)
-        else
-            GUIWidgets.DeepDisable(AuraContainer, true, Toggle)
-            GUIWidgets.DeepDisable(FilterContainer, true, Toggle)
-            GUIWidgets.DeepDisable(LayoutContainer, true, Toggle)
-            GUIWidgets.DeepDisable(CountContainer, true, Toggle)
-        end
-    end
-
-    RefreshAuraGUI()
+	GUIWidgets.DeepDisable(CountContainer, AuraDB.Count.HideStacks, HideStacksToggle)
+	end
 
     containerParent:DoLayout()
 end
 
-local function CreatePrivateAuraSettings(containerParent, unit)
-    local PrivateAurasDB = GetUnitDB(unit).Auras.PrivateAuras
-    local function UpdatePrivateAuras()
-        UpdateUnitSettings(unit, function() UUF:UpdateUnitAuras(UUF[unit:upper()], unit) end, "Auras")
-    end
-
-    local GeneralContainer = GUIWidgets.CreateInlineGroup(containerParent, "Private Aura Settings")
-    GUIWidgets.CreateInformationTag(GeneralContainer, "Private Auras are controlled by |cFF00B0F7Blizzard|r. The options below are as far as customization will allow.")
-
-    local LayoutContainer = GUIWidgets.CreateInlineGroup(containerParent, "Layout & Positioning")
-    local SizeContainer = GUIWidgets.CreateInlineGroup(containerParent, "Size & Spacing")
-
-    local Toggle = AG:Create("CheckBox")
-    Toggle:SetLabel("Enable |cFF8080FFPrivate Auras|r")
-    Toggle:SetValue(PrivateAurasDB.Enabled)
-    Toggle:SetRelativeWidth(0.33)
-    Toggle:SetCallback("OnValueChanged", function(_, _, value)
-        PrivateAurasDB.Enabled = value
-        UpdatePrivateAuras()
-        GUIWidgets.DeepDisable(GeneralContainer, not value, Toggle)
-        GUIWidgets.DeepDisable(LayoutContainer, not value)
-        GUIWidgets.DeepDisable(SizeContainer, not value)
-    end)
-    GeneralContainer:AddChild(Toggle)
-
-    local DisableCooldownToggle = AG:Create("CheckBox")
-    DisableCooldownToggle:SetLabel("Disable Cooldown Spiral")
-    DisableCooldownToggle:SetValue(PrivateAurasDB.DisableCooldown)
-    DisableCooldownToggle:SetRelativeWidth(0.33)
-    DisableCooldownToggle:SetCallback("OnValueChanged", function(_, _, value) PrivateAurasDB.DisableCooldown = value UpdatePrivateAuras() end)
-    GeneralContainer:AddChild(DisableCooldownToggle)
-
-    local DisableCooldownTextToggle = AG:Create("CheckBox")
-    DisableCooldownTextToggle:SetLabel("Disable Cooldown Text")
-    DisableCooldownTextToggle:SetValue(PrivateAurasDB.DisableCooldownText)
-    DisableCooldownTextToggle:SetRelativeWidth(0.33)
-    DisableCooldownTextToggle:SetCallback("OnValueChanged", function(_, _, value) PrivateAurasDB.DisableCooldownText = value UpdatePrivateAuras() end)
-    GeneralContainer:AddChild(DisableCooldownTextToggle)
-
-    local BorderScaleSlider = AG:Create("Slider")
-    BorderScaleSlider:SetLabel("Border Scale")
-    BorderScaleSlider:SetValue(PrivateAurasDB.BorderScale == -100 and -1 or PrivateAurasDB.BorderScale)
-    BorderScaleSlider:SetSliderValues(-1, 3, 0.1)
-    BorderScaleSlider:SetRelativeWidth(0.5)
-    BorderScaleSlider:SetCallback("OnValueChanged", function(widget, _, value) if value < 0 then value = -1 widget:SetValue(value) end PrivateAurasDB.BorderScale = value UpdatePrivateAuras() end)
-    GeneralContainer:AddChild(BorderScaleSlider)
-
-    local FrameStrataDropdown = AG:Create("Dropdown")
-    FrameStrataDropdown:SetList(FrameStrataList[1], FrameStrataList[2])
-    FrameStrataDropdown:SetLabel("Frame Strata")
-    FrameStrataDropdown:SetValue(PrivateAurasDB.FrameStrata)
-    FrameStrataDropdown:SetRelativeWidth(0.5)
-    FrameStrataDropdown:SetCallback("OnValueChanged", function(_, _, value) PrivateAurasDB.FrameStrata = value UpdatePrivateAuras() end)
-    GeneralContainer:AddChild(FrameStrataDropdown)
-
-	local AnchorParentDropdown = AG:Create("Dropdown")
-	AnchorParentDropdown:SetList(AuraAnchorParents[1], AuraAnchorParents[2])
-	AnchorParentDropdown:SetLabel("Anchor Parent")
-	AnchorParentDropdown:SetValue(PrivateAurasDB.AnchorParent)
-	AnchorParentDropdown:SetRelativeWidth(0.33)
-	AnchorParentDropdown:SetCallback("OnValueChanged", function(_, _, value) PrivateAurasDB.AnchorParent = value UpdatePrivateAuras() end)
-	LayoutContainer:AddChild(AnchorParentDropdown)
-
-    local AnchorFromDropdown = AG:Create("Dropdown")
-    AnchorFromDropdown:SetList(AnchorPoints[1], AnchorPoints[2])
-    AnchorFromDropdown:SetLabel("Anchor From")
-    AnchorFromDropdown:SetValue(PrivateAurasDB.Layout[1])
-    AnchorFromDropdown:SetRelativeWidth(0.33)
-    AnchorFromDropdown:SetCallback("OnValueChanged", function(_, _, value) PrivateAurasDB.Layout[1] = value UpdatePrivateAuras() end)
-    LayoutContainer:AddChild(AnchorFromDropdown)
-
-    local AnchorToDropdown = AG:Create("Dropdown")
-    AnchorToDropdown:SetList(AnchorPoints[1], AnchorPoints[2])
-    AnchorToDropdown:SetLabel("Anchor To")
-    AnchorToDropdown:SetValue(PrivateAurasDB.Layout[2])
-    AnchorToDropdown:SetRelativeWidth(0.33)
-    AnchorToDropdown:SetCallback("OnValueChanged", function(_, _, value) PrivateAurasDB.Layout[2] = value UpdatePrivateAuras() end)
-    LayoutContainer:AddChild(AnchorToDropdown)
-
-    local XPosSlider = AG:Create("Slider")
-    XPosSlider:SetLabel("X Position")
-    XPosSlider:SetValue(PrivateAurasDB.Layout[3])
-    XPosSlider:SetSliderValues(-3000, 3000, 0.1)
-    XPosSlider:SetRelativeWidth(0.5)
-    XPosSlider:SetCallback("OnValueChanged", function(_, _, value) PrivateAurasDB.Layout[3] = value UpdatePrivateAuras() end)
-    LayoutContainer:AddChild(XPosSlider)
-
-    local YPosSlider = AG:Create("Slider")
-    YPosSlider:SetLabel("Y Position")
-    YPosSlider:SetValue(PrivateAurasDB.Layout[4])
-    YPosSlider:SetSliderValues(-3000, 3000, 0.1)
-    YPosSlider:SetRelativeWidth(0.5)
-    YPosSlider:SetCallback("OnValueChanged", function(_, _, value) PrivateAurasDB.Layout[4] = value UpdatePrivateAuras() end)
-    LayoutContainer:AddChild(YPosSlider)
-
-    local InitialAnchorDropdown = AG:Create("Dropdown")
-    InitialAnchorDropdown:SetList(AnchorPoints[1], AnchorPoints[2])
-    InitialAnchorDropdown:SetLabel("Initial Aura Anchor")
-    InitialAnchorDropdown:SetValue(PrivateAurasDB.InitialAnchor)
-    InitialAnchorDropdown:SetRelativeWidth(0.33)
-    InitialAnchorDropdown:SetCallback("OnValueChanged", function(_, _, value) PrivateAurasDB.InitialAnchor = value UpdatePrivateAuras() end)
-    LayoutContainer:AddChild(InitialAnchorDropdown)
-
-    local GrowthXDropdown = AG:Create("Dropdown")
-    GrowthXDropdown:SetList({["LEFT"] = "Left", ["RIGHT"] = "Right"}, {"LEFT", "RIGHT"})
-    GrowthXDropdown:SetLabel("Horizontal Growth")
-    GrowthXDropdown:SetValue(PrivateAurasDB.GrowthX)
-    GrowthXDropdown:SetRelativeWidth(0.33)
-    GrowthXDropdown:SetCallback("OnValueChanged", function(_, _, value) PrivateAurasDB.GrowthX = value UpdatePrivateAuras() end)
-    LayoutContainer:AddChild(GrowthXDropdown)
-
-    local GrowthYDropdown = AG:Create("Dropdown")
-    GrowthYDropdown:SetList({["UP"] = "Up", ["DOWN"] = "Down"}, {"UP", "DOWN"})
-    GrowthYDropdown:SetLabel("Vertical Growth")
-    GrowthYDropdown:SetValue(PrivateAurasDB.GrowthY)
-    GrowthYDropdown:SetRelativeWidth(0.33)
-    GrowthYDropdown:SetCallback("OnValueChanged", function(_, _, value) PrivateAurasDB.GrowthY = value UpdatePrivateAuras() end)
-    LayoutContainer:AddChild(GrowthYDropdown)
-
-    local SizeSlider = AG:Create("Slider")
-    SizeSlider:SetLabel("Size")
-    SizeSlider:SetValue(PrivateAurasDB.Size)
-    SizeSlider:SetSliderValues(8, 128, 1)
-    SizeSlider:SetRelativeWidth(0.33)
-    SizeSlider:SetCallback("OnValueChanged", function(_, _, value) PrivateAurasDB.Size = value UpdatePrivateAuras() end)
-    SizeContainer:AddChild(SizeSlider)
-
-    local SpacingSlider = AG:Create("Slider")
-    SpacingSlider:SetLabel("Spacing")
-    SpacingSlider:SetValue(PrivateAurasDB.Spacing)
-    SpacingSlider:SetSliderValues(-20, 100, 1)
-    SpacingSlider:SetRelativeWidth(0.33)
-    SpacingSlider:SetCallback("OnValueChanged", function(_, _, value) PrivateAurasDB.Spacing = value UpdatePrivateAuras() end)
-    SizeContainer:AddChild(SpacingSlider)
-
-    local NumSlider = AG:Create("Slider")
-    NumSlider:SetLabel("Private Auras To Display")
-    NumSlider:SetValue(PrivateAurasDB.Num)
-    NumSlider:SetSliderValues(1, 12, 1)
-    NumSlider:SetRelativeWidth(0.33)
-    NumSlider:SetCallback("OnValueChanged", function(_, _, value) PrivateAurasDB.Num = value UpdatePrivateAuras() end)
-    SizeContainer:AddChild(NumSlider)
-
-    GUIWidgets.DeepDisable(GeneralContainer, not PrivateAurasDB.Enabled, Toggle)
-    GUIWidgets.DeepDisable(LayoutContainer, not PrivateAurasDB.Enabled)
-    GUIWidgets.DeepDisable(SizeContainer, not PrivateAurasDB.Enabled)
-
-    containerParent:DoLayout()
-end
-
-local function CreateAuraSettings(containerParent, unit)
+local function CreateAuraSettings(containerParent, unit, refreshScrollFrame)
     local AurasDB = GetUnitDB(unit).Auras
 
     local ShowAurasButton = AG:Create("Button")
@@ -3828,34 +3680,91 @@ local function CreateAuraSettings(containerParent, unit)
     FrameStrataDropdown:SetCallback("OnValueChanged", function(_, _, value) AurasDB.FrameStrata = value UpdateUnitSettings(unit, function() UUF:UpdateUnitAurasStrata(unit) end, "Auras") end)
     containerParent:AddChild(FrameStrataDropdown)
 
-    local function SelectAuraTab(AuraContainer, _, AuraTab)
-        SaveSubTab(unit, "Auras", AuraTab)
-        AuraContainer:ReleaseChildren()
-        if AuraTab == "Buffs" then
-            CreateSpecificAuraSettings(AuraContainer, unit, "Buffs")
-        elseif AuraTab == "Debuffs" then
-            CreateSpecificAuraSettings(AuraContainer, unit, "Debuffs")
-        elseif AuraTab == "Custom" and AurasDB.Custom then
-            CreateSpecificAuraSettings(AuraContainer, unit, "Custom")
-        elseif AuraTab == "PrivateAuras" and AurasDB.PrivateAuras then
-            CreatePrivateAuraSettings(AuraContainer, unit)
+    local function CreateAuraContainerManager(managerParent)
+        local selectedSlot = GetSavedSubTab(unit, "AuraContainerSlot", "BOTTOMLEFT")
+        if not UUF.AURA_CONTAINER_SLOT_NAMES[selectedSlot] then selectedSlot = "BOTTOMLEFT" end
+        local AnchorSelector = AG:Create("UUFAnchorButtons")
+        local SettingsContainer = AG:Create("SimpleGroup")
+        SettingsContainer:SetLayout("Flow")
+        SettingsContainer:SetFullWidth(true)
+
+        local function UpdateAuras()
+            UpdateUnitSettings(unit, function() UUF:UpdateUnitAuras(UUF[unit:upper()], unit) end, "Auras")
         end
-        containerParent:DoLayout()
+
+        local function RefreshSelectedContainer()
+            SettingsContainer:ReleaseChildren()
+            AnchorSelector:SetConfiguredSlots(AurasDB.Containers)
+            AnchorSelector:SetValue(selectedSlot)
+            local AuraDB = AurasDB.Containers[selectedSlot]
+            if AuraDB then
+                local DeleteButton = AG:Create("Button")
+                DeleteButton:SetText("Delete " .. UUF.AURA_CONTAINER_SLOT_NAMES[selectedSlot] .. " Container")
+                DeleteButton:SetRelativeWidth(1)
+                DeleteButton:SetCallback("OnClick", function()
+					local slotToDelete = selectedSlot
+					UUF:CreatePrompt("Delete Aura Container", "Delete the |cFF8080FF" .. UUF.AURA_CONTAINER_SLOT_NAMES[slotToDelete] .. "|r aura container and all of its settings?", function()
+						AurasDB.Containers[slotToDelete] = nil
+						UpdateAuras()
+						RefreshSelectedContainer()
+					end, nil, "Delete")
+                end)
+                SettingsContainer:AddChild(DeleteButton)
+                CreateSpecificAuraSettings(SettingsContainer, unit, selectedSlot, RefreshSelectedContainer)
+            else
+                for _, auraType in ipairs({"Buffs", "Debuffs"}) do
+					local containerType = auraType
+                    local CreateButton = AG:Create("Button")
+                    CreateButton:SetText("Create " .. containerType .. " Container")
+                    CreateButton:SetRelativeWidth(0.5)
+					CreateButton:SetCallback("OnClick", function()
+                        local source
+						for _, slot in ipairs(UUF.AURA_CONTAINER_SLOTS) do
+							local ContainerDB = AurasDB.Containers[slot.Key]
+							if ContainerDB and ContainerDB.Type == containerType then source = ContainerDB break end
+						end
+						local SlotDB = UUF.AURA_CONTAINER_SLOT_SETTINGS[selectedSlot]
+						local ContainerDB = {}
+						if source then UUF:CopyTable(source, ContainerDB) end
+						ContainerDB.Type = containerType
+						ContainerDB.AnchorParent = ContainerDB.AnchorParent or "Frame"
+						ContainerDB.Size = ContainerDB.Size or 32
+						ContainerDB.Layout = {SlotDB.Layout[1], SlotDB.Layout[2], SlotDB.Layout[3], SlotDB.Layout[4], ContainerDB.Layout and ContainerDB.Layout[5] or 1}
+						ContainerDB.Num = ContainerDB.Num or 6
+						ContainerDB.Wrap = ContainerDB.Wrap or 6
+						ContainerDB.GrowthDirection = SlotDB.GrowthDirection
+						ContainerDB.WrapDirection = selectedSlot:find("TOP") and "UP" or "DOWN"
+						ContainerDB.ShowType = ContainerDB.ShowType or false
+						ContainerDB.Sorting = ContainerDB.Sorting or "BLIZZARD"
+						ContainerDB.SpellIDs = {}
+						ContainerDB.Filters = {}
+						ContainerDB.Count = ContainerDB.Count or {HideStacks = false, Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2}, FontSize = 12, Colour = {1, 1, 1, 1}}
+						AurasDB.Containers[selectedSlot] = ContainerDB
+                        UpdateAuras()
+                        RefreshSelectedContainer()
+                    end)
+                    SettingsContainer:AddChild(CreateButton)
+                end
+            end
+            managerParent:DoLayout()
+            containerParent:DoLayout()
+			refreshScrollFrame()
+        end
+
+        AnchorSelector:SetLabel("Aura Container Slots & Initial Anchors")
+        AnchorSelector:SetConfiguredSlots(AurasDB.Containers)
+        AnchorSelector:SetValue(selectedSlot)
+        AnchorSelector:SetCallback("OnValueChanged", function(_, _, value)
+            selectedSlot = value
+            SaveSubTab(unit, "AuraContainerSlot", value)
+            RefreshSelectedContainer()
+        end)
+        managerParent:AddChild(AnchorSelector)
+        managerParent:AddChild(SettingsContainer)
+        RefreshSelectedContainer()
     end
 
-    local AuraContainerTabGroup = AG:Create("TabGroup")
-    AuraContainerTabGroup:SetLayout("Flow")
-    AuraContainerTabGroup:SetFullWidth(true)
-    if AurasDB.PrivateAuras then
-        AuraContainerTabGroup:SetTabs({ { text = "Buffs", value = "Buffs"}, { text = "Debuffs", value = "Debuffs"}, { text = "Custom", value = "Custom"}, { text = "Private Auras", value = "PrivateAuras"}, })
-    elseif AurasDB.Custom then
-        AuraContainerTabGroup:SetTabs({ { text = "Buffs", value = "Buffs"}, { text = "Debuffs", value = "Debuffs"}, { text = "Custom", value = "Custom"}, })
-    else
-        AuraContainerTabGroup:SetTabs({ { text = "Buffs", value = "Buffs"}, { text = "Debuffs", value = "Debuffs"}, })
-    end
-    AuraContainerTabGroup:SetCallback("OnGroupSelected", SelectAuraTab)
-    AuraContainerTabGroup:SelectTab(GetSavedSubTab(unit, "Auras", "Buffs"))
-    containerParent:AddChild(AuraContainerTabGroup)
+    CreateAuraContainerManager(containerParent)
 
     containerParent:DoLayout()
 end
@@ -3868,7 +3777,7 @@ local function CreateCooldownTextSettings(containerParent)
     AdvancedToggle:SetLabel("Advanced")
     AdvancedToggle:SetValue(CooldownTextDB.Advanced)
     AdvancedToggle:SetRelativeWidth(CooldownTextDB.Advanced and 1 or 0.5)
-    AdvancedToggle:SetCallback("OnValueChanged", function(_, _, value) CooldownTextDB.Advanced = value UUF:UpdateAllUnitFrames() containerParent:ReleaseChildren() CreateCooldownTextSettings(containerParent) containerParent:DoLayout() end)
+    AdvancedToggle:SetCallback("OnValueChanged", function(_, _, value) CooldownTextDB.Advanced = value reloadRequired = true UUF:UpdateAllUnitFrames() containerParent:ReleaseChildren() CreateCooldownTextSettings(containerParent) containerParent:DoLayout() end)
     AdvancedToggle:SetCallback("OnEnter", function() GameTooltip:SetOwner(AdvancedToggle.frame, "ANCHOR_CURSOR") GameTooltip:AddLine("Advanced Settings will allow you to customize cooldown text for each unit individually.", 1, 1, 1, true) GameTooltip:Show() end)
     AdvancedToggle:SetCallback("OnLeave", function() GameTooltip:Hide() end)
     CooldownTextContainer:AddChild(AdvancedToggle)
@@ -3885,7 +3794,7 @@ local function CreateCooldownTextSettings(containerParent)
         AnchorFromDropdown:SetLabel("Anchor From")
         AnchorFromDropdown:SetValue(CooldownTextStyleDB.Layout[1])
         AnchorFromDropdown:SetRelativeWidth(0.5)
-        AnchorFromDropdown:SetCallback("OnValueChanged", function(_, _, value) CooldownTextStyleDB.Layout[1] = value UUF:UpdateAllUnitFrames() end)
+        AnchorFromDropdown:SetCallback("OnValueChanged", function(_, _, value) CooldownTextStyleDB.Layout[1] = value reloadRequired = true UUF:UpdateAllUnitFrames() end)
         StyleContainerParent:AddChild(AnchorFromDropdown)
 
         local AnchorToDropdown = AG:Create("Dropdown")
@@ -3893,7 +3802,7 @@ local function CreateCooldownTextSettings(containerParent)
         AnchorToDropdown:SetLabel("Anchor To")
         AnchorToDropdown:SetValue(CooldownTextStyleDB.Layout[2])
         AnchorToDropdown:SetRelativeWidth(0.5)
-        AnchorToDropdown:SetCallback("OnValueChanged", function(_, _, value) CooldownTextStyleDB.Layout[2] = value UUF:UpdateAllUnitFrames() end)
+        AnchorToDropdown:SetCallback("OnValueChanged", function(_, _, value) CooldownTextStyleDB.Layout[2] = value reloadRequired = true UUF:UpdateAllUnitFrames() end)
         StyleContainerParent:AddChild(AnchorToDropdown)
 
         local XPosSlider = AG:Create("Slider")
@@ -3901,7 +3810,7 @@ local function CreateCooldownTextSettings(containerParent)
         XPosSlider:SetValue(CooldownTextStyleDB.Layout[3])
         XPosSlider:SetSliderValues(-3000, 3000, 0.1)
         XPosSlider:SetRelativeWidth(0.33)
-        XPosSlider:SetCallback("OnValueChanged", function(_, _, value) CooldownTextStyleDB.Layout[3] = value UUF:UpdateAllUnitFrames() end)
+        XPosSlider:SetCallback("OnValueChanged", function(_, _, value) CooldownTextStyleDB.Layout[3] = value reloadRequired = true UUF:UpdateAllUnitFrames() end)
         StyleContainerParent:AddChild(XPosSlider)
 
         local YPosSlider = AG:Create("Slider")
@@ -3909,7 +3818,7 @@ local function CreateCooldownTextSettings(containerParent)
         YPosSlider:SetValue(CooldownTextStyleDB.Layout[4])
         YPosSlider:SetSliderValues(-3000, 3000, 0.1)
         YPosSlider:SetRelativeWidth(0.33)
-        YPosSlider:SetCallback("OnValueChanged", function(_, _, value) CooldownTextStyleDB.Layout[4] = value UUF:UpdateAllUnitFrames() end)
+        YPosSlider:SetCallback("OnValueChanged", function(_, _, value) CooldownTextStyleDB.Layout[4] = value reloadRequired = true UUF:UpdateAllUnitFrames() end)
         StyleContainerParent:AddChild(YPosSlider)
 
         local FontSizeSlider = AG:Create("Slider")
@@ -3917,10 +3826,10 @@ local function CreateCooldownTextSettings(containerParent)
         FontSizeSlider:SetValue(CooldownTextStyleDB.FontSize)
         FontSizeSlider:SetSliderValues(8, 64, 1)
         FontSizeSlider:SetRelativeWidth(0.33)
-        FontSizeSlider:SetCallback("OnValueChanged", function(_, _, value) CooldownTextStyleDB.FontSize = value UUF:UpdateAllUnitFrames() end)
+        FontSizeSlider:SetCallback("OnValueChanged", function(_, _, value) CooldownTextStyleDB.FontSize = value reloadRequired = true UUF:UpdateAllUnitFrames() end)
         FontSizeSlider:SetDisabled(CooldownTextStyleDB.ScaleByIconSize)
         StyleContainerParent:AddChild(FontSizeSlider)
-        ScaleByIconSizeCheckbox:SetCallback("OnValueChanged", function(_, _, value) CooldownTextStyleDB.ScaleByIconSize = value FontSizeSlider:SetDisabled(value) UUF:UpdateAllUnitFrames() end)
+        ScaleByIconSizeCheckbox:SetCallback("OnValueChanged", function(_, _, value) CooldownTextStyleDB.ScaleByIconSize = value reloadRequired = true FontSizeSlider:SetDisabled(value) UUF:UpdateAllUnitFrames() end)
     end
 
     if CooldownTextDB.Advanced then
@@ -4056,14 +3965,7 @@ local function CreateGlobalSettings(containerParent)
     local RemoveColours = AG:Create("Button")
     RemoveColours:SetText("Dark Mode")
     RemoveColours:SetRelativeWidth(0.33)
-    RemoveColours:SetCallback("OnClick", function()
-        UUF:ForEachUnitDB(function(unitDB)
-            unitDB.HealthBar.ColourByClass = false
-            unitDB.HealthBar.ColourWhenTapped = false
-            unitDB.HealthBar.ColourBackgroundByClass = false
-        end)
-        UUF:UpdateAllUnitFrames()
-    end)
+    RemoveColours:SetCallback("OnClick", function() UUF:ForEachUnitDB(function(unitDB) unitDB.HealthBar.ColourByClass = false unitDB.HealthBar.ColourWhenTapped = false unitDB.HealthBar.ColourBackgroundByClass = false end) UUF:UpdateAllUnitFrames() end)
     ToggleContainer:AddChild(RemoveColours)
 
     local DisplayLoginMessageToggle = AG:Create("CheckBox")
@@ -4109,16 +4011,8 @@ local function CreateGlobalSettings(containerParent)
     ToTSeparatorDropdown:SetLabel("ToT Separator")
     ToTSeparatorDropdown:SetValue(UUF.db.profile.General.ToTSeparator)
     ToTSeparatorDropdown:SetRelativeWidth(0.25)
-    ToTSeparatorDropdown:SetCallback("OnValueChanged", function(_, _, value)
-        UUF.db.profile.General.ToTSeparator = value
-        UUF.TOT_SEPARATOR = value
-        UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end)
-    end)
-    ToTSeparatorDropdown:SetCallback("OnEnter", function()
-        GameTooltip:SetOwner(ToTSeparatorDropdown.frame, "ANCHOR_BOTTOM")
-        GameTooltip:AddLine("Used as the prefix separator for Target of Target tags like |cFF8080FF[name:target]|r on your target frame.", 1, 1, 1)
-        GameTooltip:Show()
-    end)
+    ToTSeparatorDropdown:SetCallback("OnValueChanged", function(_, _, value) UUF.db.profile.General.ToTSeparator = value UUF.TOT_SEPARATOR = value UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end) end)
+    ToTSeparatorDropdown:SetCallback("OnEnter", function() GameTooltip:SetOwner(ToTSeparatorDropdown.frame, "ANCHOR_BOTTOM") GameTooltip:AddLine("Used as the prefix separator for Target of Target tags like |cFF8080FF[name:target]|r on your target frame.", 1, 1, 1) GameTooltip:Show() end)
     ToTSeparatorDropdown:SetCallback("OnLeave", function() GameTooltip:Hide() end)
     TagContainer:AddChild(ToTSeparatorDropdown)
 
@@ -4194,7 +4088,7 @@ local function CreateUnitSettings(containerParent, unit)
         elseif UnitTab == "HealPrediction" then
             CreateHealPredictionSettings(SubContainer, unit, function() UpdateUnitSettings(unit, function() UUF:UpdateUnitHealPrediction(UUF[unit:upper()], unit) end, "HealPrediction") end)
         elseif UnitTab == "Auras" then
-            CreateAuraSettings(SubContainer, unit)
+            CreateAuraSettings(SubContainer, unit, function() SettingsContainer:DoLayout() containerParent:DoLayout() end)
         elseif UnitTab == "PowerBar" then
             CreatePowerBarSettings(SubContainer, unit, function() UpdateUnitSettings(unit, function() UUF:UpdateUnitPowerBar(UUF[unit:upper()], unit) end, "PowerBar") end)
         elseif UnitTab == "SecondaryPowerBar" and unit == "player" and playerHasSecondaryPower then
@@ -4565,6 +4459,7 @@ function UUF:CreateGUI()
     if InCombatLockdown() then return end
 
     isGUIOpen = true
+    reloadRequired = false
 
     Container = AG:Create("Frame")
     Container:SetTitle(UUF.PRETTY_ADDON_NAME)
@@ -4572,7 +4467,14 @@ function UUF:CreateGUI()
     Container:SetWidth(1100)
     Container:SetHeight(600)
     Container:EnableResize(false)
-    Container:SetCallback("OnClose", function(widget) AG:Release(widget) isGUIOpen = false DisableAllTestModes() end)
+    Container:SetCallback("OnClose", function(widget)
+		local reloadRequired = reloadRequired
+		reloadRequired = false
+		AG:Release(widget)
+		isGUIOpen = false
+		DisableAllTestModes()
+		if reloadRequired then UUF:CreatePrompt("Reload UI", "Aura visual settings have changed. Reload the UI now to apply them?", function() C_UI.Reload() end, nil, "Reload Now", "Later") end
+	end)
 
     local function SelectTab(GUIContainer, _, MainTab)
 		MainTab = MainTab:match("[^\001]+$")

@@ -9,6 +9,23 @@ function UUF:RefreshProfiles()
 end
 
 function UnhaltedUnitFrames:OnInitialize()
+	local SavedVariables = _G.UUFDB or {}
+	_G.UUFDB = SavedVariables
+	if not SavedVariables.AuraContainersReset then
+		if SavedVariables.profiles then
+			for _, ProfileDB in pairs(SavedVariables.profiles) do
+				if ProfileDB.Units then
+					for _, UnitDB in pairs(ProfileDB.Units) do
+						if type(UnitDB) == "table" then
+							UnitDB.Auras = nil
+							if UnitDB.augmentation then UnitDB.augmentation.Auras = nil end
+						end
+					end
+				end
+			end
+		end
+		SavedVariables.AuraContainersReset = true
+	end
     UUF.db = LibStub("AceDB-3.0"):New("UUFDB", UUF:GetDefaultDB(), true)
     UUF.LDS:EnhanceDatabase(UUF.db, "UnhaltedUnitFrames")
     UUF.TAG_UPDATE_INTERVAL = UUF.db.profile.General.TagUpdateInterval or 0.25

@@ -1,13 +1,6 @@
 local _, UUF = ...
 local UnhaltedUnitFrames = LibStub("AceAddon-3.0"):NewAddon("UnhaltedUnitFrames")
 
-function UUF:RefreshProfiles()
-	UUF:ResolveLSM()
-	UUF:LoadCustomColours()
-	UUF:UpdateAllUnitFrames()
-	UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end)
-end
-
 function UnhaltedUnitFrames:OnInitialize()
 	local SavedVariables = _G.UUFDB or {}
 	_G.UUFDB = SavedVariables

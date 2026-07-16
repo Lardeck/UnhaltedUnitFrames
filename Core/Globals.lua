@@ -768,3 +768,10 @@ UUF.SCMAnchors = {
     ["Focus Target"] = "UUF_FocusTarget",
     ["Target of Target"] = "UUF_TargetTarget",
 }
+
+function UUF:RefreshProfiles()
+	UUF:ResolveLSM()
+	UUF:LoadCustomColours()
+	UUF:UpdateAllUnitFrames()
+	UUF:ForEachUnitDB(function(_, unit) UUF:UpdateUnitTags(unit) end)
+end

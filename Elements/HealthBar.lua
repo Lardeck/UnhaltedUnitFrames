@@ -81,7 +81,7 @@ function UUF:CreateUnitHealthBar(unitFrame, unit)
             curHP = curHP or 0
             unitHP:SetMinMaxValues(0, maxHP)
             unitHP:SetValue(UnitHealthMissing(unitFrame.unit, true), unitFrame.Health.smoothing)
-            SetHealthBackgroundColour(unitFrame, unit, HealthBarDB)
+			SetHealthBackgroundColour(unitFrame, unit, UUF:GetUnitDB(unitFrame, unit).HealthBar)
         end
 
         if HealthBarDB.Inverse then

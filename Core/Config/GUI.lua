@@ -3402,14 +3402,14 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
     ShowTypeCheckbox:SetRelativeWidth(0.5)
     AuraContainer:AddChild(ShowTypeCheckbox)
 
-	local selectedSettingsTab = GetSavedSubTab(unit, "AuraContainerSettings", "Filters")
+	local selectedSettingsTab = GetSavedSubTab(unit, "AuraContainerSettings", "Layout")
 	local SettingsTabs = AG:Create("TabGroup")
 	SettingsTabs:SetLayout("Flow")
 	SettingsTabs:SetFullWidth(true)
 	SettingsTabs:SetTabs({
-		{text = "Filters", value = "Filters"},
-		{text = "Layout & Positioning", value = "Layout"},
+        {text = "Layout & Positioning", value = "Layout"},
 		{text = "Count", value = "Count"},
+		{text = "Filters", value = "Filters"},
 	})
 	SettingsTabs:SelectTab(selectedSettingsTab)
 	SettingsTabs:SetCallback("OnGroupSelected", function(_, _, value) SaveSubTab(unit, "AuraContainerSettings", value) refreshSettings() end)
@@ -3519,7 +3519,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
 	AnchorParentDropdown:SetList(AuraAnchorParents[1], AuraAnchorParents[2])
 	AnchorParentDropdown:SetLabel("Anchor Parent")
 	AnchorParentDropdown:SetValue(AuraDB.AnchorParent)
-	AnchorParentDropdown:SetRelativeWidth(0.25)
+	AnchorParentDropdown:SetRelativeWidth(0.5)
 	AnchorParentDropdown:SetCallback("OnValueChanged", function(_, _, value) AuraDB.AnchorParent = value UpdateAuras() end)
 	LayoutContainer:AddChild(AnchorParentDropdown)
 
@@ -3527,7 +3527,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
 	AnchorFromDropdown:SetList(AnchorPoints[1], AnchorPoints[2])
 	AnchorFromDropdown:SetLabel("Anchor From")
 	AnchorFromDropdown:SetValue(AuraDB.Layout[1])
-	AnchorFromDropdown:SetRelativeWidth(0.25)
+	AnchorFromDropdown:SetRelativeWidth(0.5)
 	AnchorFromDropdown:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Layout[1] = value UpdateAuras() end)
 	LayoutContainer:AddChild(AnchorFromDropdown)
 
@@ -3535,7 +3535,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
 	AnchorToDropdown:SetList(AnchorPoints[1], AnchorPoints[2])
 	AnchorToDropdown:SetLabel("Anchor To")
 	AnchorToDropdown:SetValue(AuraDB.Layout[2])
-	AnchorToDropdown:SetRelativeWidth(0.25)
+	AnchorToDropdown:SetRelativeWidth(0.5)
 	AnchorToDropdown:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Layout[2] = value UpdateAuras() end)
 	LayoutContainer:AddChild(AnchorToDropdown)
 
@@ -3543,7 +3543,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
     SortingDropdown:SetList({ BLIZZARD = "Blizzard", BLIZZARD_REVERSED = "Blizzard Reversed", DURATION = "Duration", DURATION_REVERSED = "Duration Reversed", }, {"BLIZZARD", "BLIZZARD_REVERSED", "DURATION", "DURATION_REVERSED"})
     SortingDropdown:SetLabel("Aura Sorting")
     SortingDropdown:SetValue(AuraDB.Sorting or "BLIZZARD")
-    SortingDropdown:SetRelativeWidth(0.25)
+    SortingDropdown:SetRelativeWidth(0.5)
     SortingDropdown:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Sorting = value UpdateAuras() end)
     for _, dropdownItem in SortingDropdown.pullout:IterateItems() do
         local value = dropdownItem.userdata and dropdownItem.userdata.value
@@ -3562,7 +3562,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
     XPosSlider:SetLabel("X Position")
     XPosSlider:SetValue(AuraDB.Layout[3])
     XPosSlider:SetSliderValues(-3000, 3000, 0.1)
-    XPosSlider:SetRelativeWidth(0.25)
+    XPosSlider:SetRelativeWidth(0.5)
     XPosSlider:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Layout[3] = value UpdateAuras() end)
     LayoutContainer:AddChild(XPosSlider)
 
@@ -3570,7 +3570,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
     YPosSlider:SetLabel("Y Position")
     YPosSlider:SetValue(AuraDB.Layout[4])
     YPosSlider:SetSliderValues(-3000, 3000, 0.1)
-    YPosSlider:SetRelativeWidth(0.25)
+    YPosSlider:SetRelativeWidth(0.5)
     YPosSlider:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Layout[4] = value UpdateAuras() end)
     LayoutContainer:AddChild(YPosSlider)
 
@@ -3578,7 +3578,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
     SizeSlider:SetLabel("Size")
     SizeSlider:SetValue(AuraDB.Size)
     SizeSlider:SetSliderValues(8, 64, 1)
-    SizeSlider:SetRelativeWidth(0.25)
+    SizeSlider:SetRelativeWidth(0.5)
     SizeSlider:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Size = value UpdateAuras() end)
     LayoutContainer:AddChild(SizeSlider)
 
@@ -3586,7 +3586,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refres
     SpacingSlider:SetLabel("Spacing")
     SpacingSlider:SetValue(AuraDB.Layout[5])
     SpacingSlider:SetSliderValues(-5, 5, 1)
-    SpacingSlider:SetRelativeWidth(0.25)
+    SpacingSlider:SetRelativeWidth(0.5)
     SpacingSlider:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Layout[5] = value UpdateAuras() end)
     LayoutContainer:AddChild(SpacingSlider)
 

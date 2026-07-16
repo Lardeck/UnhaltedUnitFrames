@@ -69,6 +69,7 @@ local function ApplyAuraButtonStyle(button, unitFrame, unit, auraKey, size)
 	button:SetSize(size, size)
 	button.Icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 	button.Cooldown:SetDrawEdge(false)
+	button.Cooldown:SetDrawBling(false)
 	button.Cooldown:SetReverse(true)
 	button.Cooldown:SetHideCountdownNumbers(true)
 	ApplyFontStyle(button.Count, button, AuraDB.Count.Layout, AuraDB.Count.FontSize, AuraDB.Count.Colour)
@@ -89,6 +90,7 @@ end
 local function PostCreateAuraButton(container, button)
 	local state = AuraContainerState[container]
 	if not state then return end
+	state.Buttons[#state.Buttons + 1] = button
 	CreateAuraButtonBorder(button)
 	ApplyAuraButtonStyle(button, state.UnitFrame, state.Unit, state.AuraKey, state.Size)
 end
@@ -154,7 +156,7 @@ local function CreateAuraContainer(unitFrame, unit, auraKey, durationFormatter)
 	})
 	if not container then return end
 
-	local state = {Groups = {}, ActiveGroups = {}, ActiveSpellIDGroups = {}, Size = AuraDB and AuraDB.Size or 1, UnitFrame = unitFrame, Unit = unit, AuraKey = auraKey}
+	local state = {Groups = {}, ActiveGroups = {}, ActiveSpellIDGroups = {}, Buttons = {}, Size = AuraDB and AuraDB.Size or 1, UnitFrame = unitFrame, Unit = unit, AuraKey = auraKey}
 	AuraContainerState[container] = state
 	container.size = state.Size
 	container.showCount = true
@@ -179,9 +181,17 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	local auraType = AuraDB.Type == "Debuffs" and "HARMFUL" or "HELPFUL"
 	local hasSpellIDs = next(AuraDB.SpellIDs)
 	local candidateFilters = hasSpellIDs and {includeSpellIDs = AuraDB.SpellIDs} or nil
-	if not next(state.Groups) then
-		state.Size = AuraDB.Size
-		container.size = AuraDB.Size
+	local sizeChanged = state.Size ~= AuraDB.Size
+	state.Size = AuraDB.Size
+	container.size = AuraDB.Size
+	if sizeChanged then
+		local CooldownTextDB = UUF.db.profile.General.CooldownText
+		if CooldownTextDB.Advanced then CooldownTextDB = UUF:GetUnitDB(unitFrame, unit).Auras.AuraDuration end
+		local fontSize = CooldownTextDB.ScaleByIconSize and math.max(CooldownTextDB.FontSize * state.Size / 36, 1) or CooldownTextDB.FontSize
+		for _, button in ipairs(state.Buttons) do
+			button:SetSize(state.Size, state.Size)
+			ApplyFontStyle(button.Time, button, CooldownTextDB.Layout, fontSize)
+		end
 	end
 	local filters, playerTokens, otherTokens, showAllPlayer, showAllOthers = GetAuraFilters(AuraDB, auraType)
 	local hasAuraFilters = #filters > 0

@@ -1,6 +1,6 @@
 local parent, ns = ...
 local global = C_AddOns.GetAddOnMetadata(parent, 'X-oUF')
-local _VERSION = 'dcd58af'
+local _VERSION = '3ee19da'
 if(_VERSION:find('project%-version')) then
 	_VERSION = 'devel'
 end
@@ -678,6 +678,7 @@ do
 
 		header.style = style
 		header.styleFunction = styleProxy
+		header.prefix = name
 
 		-- Expose the header through oUF.headers.
 		table.insert(headers, header)

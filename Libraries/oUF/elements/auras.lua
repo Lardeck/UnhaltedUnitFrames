@@ -1,7 +1,8 @@
 --[[
 # Element: Auras
 
-Handles creation of aura containers, groups, slots, and buttons.
+Handles creation of [aura containers](https://warcraft.wiki.gg/wiki/UIOBJECT_AuraContainer), groups,
+slots, and [buttons](https://warcraft.wiki.gg/wiki/UIOBJECT_AuraButton).
 
 ## Notes
 
@@ -11,30 +12,28 @@ The options detailed below are attributes on the element returned from the meta 
 method documented further down for additional options. These options are shared across all buttons,
 groups and slots for each element.
 
-TODO: add link to wiki about AuraContainer, once it's created
-
 ## Options (for buttons)
 
-.size                   - Aura button size. Defaults to 16 (number)
-.width                  - Aura button width. Takes priority over `size` (number)
-.height                 - Aura button height. Takes priority over `size` (number)
-.showBuffBorder         - Show Border texture colored by oUF.colors.dispel when it's a buff (boolean)
-.showDebuffBorder       - Show Border texture colored by oUF.colors.dispel when it's a debuff (boolean)
-.showBorderSymbol       - Show dispel type symbol on the Border texture. Not applicable if the style is not Atlas (boolean)
-.borderStyle            - TODO: explain and link to wiki
-.showCount              - Show Count fontstring representing aura applications (boolean)
-.countFormatter         - Formatter used to adjust the text displayed on the Count fontstring (NumericRuleFormatter) (TODO: link to wiki about this)
-.showDuration           - Show Duration fontstring representing time remaining of the aura (boolean)
-.durationFormatter      - Formatter used to adjust the text displayed on the Duration fontstring (NumericRuleFormatter) (TODO: link to wiki about this)
-.durationFormat         - Plain text format for the text displayed on the Duration fontstring. `durationFormatter` takes presedence (string)
-.durationColorCurve     - Curve used to color the text displayed on the Duration fontstring (ColorCurve)
-.durationModifier       - ? TODO
-.durationUpdateInterval - Interval of updates for the text displayed on the Duration fontstring (number)
-.durationExpiredText    - Text used on the Duration fontstring when it has expired. Defaults to an empty string (string)
-.durationZeroText       - Text used on the Duration fontstring when it has no duration. Defaults to an empty string (string)
-.disableMouse           - Disables mouse events (boolean)
-.disableCooldown        - Disables the provided cooldown spiral frame (boolean)
-.cancelButton           - A list of mouse buttons and actions used to cancel the aura, if possible ([string](https://warcraft.wiki.gg/wiki/API_Button_RegisterForClicks))
+.size                   - Aura button size. Defaults to 16 (number?)
+.width                  - Aura button width. Takes priority over `size` (number?)
+.height                 - Aura button height. Takes priority over `size` (number?)
+.showBuffBorder         - Show Border texture when it's a buff (boolean?)
+.showDebuffBorder       - Show Border texture when it's a debuff (boolean?)
+.showBorderSymbol       - Show dispel type symbol on the Border texture. Not applicable if the border style is not Atlas (boolean?)
+.borderStyle            - Which style to use for the border (AuraButtonBorderStyle?)
+.showCount              - Show Count fontstring representing aura applications (boolean?)
+.countFormatter         - Formatter used to adjust the text displayed on the Count fontstring ([NumericFormatter](https://warcraft.wiki.gg/wiki/ScriptObject_NumericFormatter)?)
+.showDuration           - Show Duration fontstring representing time remaining of the aura (boolean?)
+.durationFormatter      - Formatter used to adjust the text displayed on the Duration fontstring ([NumericFormatter](https://warcraft.wiki.gg/wiki/ScriptObject_NumericFormatter)?)
+.durationFormat         - Plain text format for the text displayed on the Duration fontstring. `durationFormatter` takes presedence (string?)
+.durationColorCurve     - Curve used to color the text displayed on the Duration fontstring ([ColorCurve](https://warcraft.wiki.gg/wiki/ScriptObject_ColorCurveObject)?)
+.durationModifier       - Duration binding time modifier ([Enum.DurationTimeModifer](https://warcraft.wiki.gg/wiki/Enum.DurationTimeModifier)?)
+.durationUpdateInterval - Interval of updates for the text displayed on the Duration fontstring (number?)
+.durationExpiredText    - Text used on the Duration fontstring when it has expired. Defaults to an empty string (string?)
+.durationZeroText       - Text used on the Duration fontstring when it has no duration. Defaults to an empty string (string?)
+.disableMouse           - Disables mouse events (boolean?)
+.disableCooldown        - Disables the provided cooldown spiral frame (boolean?)
+.cancelButton           - A list of mouse buttons and actions used to cancel the aura, if possible ([string](https://warcraft.wiki.gg/wiki/API_Button_RegisterForClicks)?)
 
 ## Options (for groups and slots)
 
@@ -96,7 +95,24 @@ local GetOrCreateAuraContainer = Private.GetOrCreateAuraContainer
 
 local STATE = {}
 
-local function CreateButton(element, _, button)
+local function SetSlotPosition(element, button, index)
+	local width = element.width or element.size or 16
+	local height = element.height or element.size or 16
+	local sizeX = width + (element.spacingX or element.spacing or 0)
+	local sizeY = height + (element.spacingY or element.spacing or 0)
+	local anchor = element.initialAnchor or 'TOPLEFT'
+	local growthX = (element.growthX == 'LEFT' and -1) or 1
+	local growthY = (element.growthY == 'DOWN' and -1) or 1
+	local cols = element.maxCols or math.floor(element:GetAuraLayoutRowWidth() / sizeX + 0.5)
+
+	local col = (index - 1) % cols
+	local row = math.floor((index - 1) / cols)
+
+	button:ClearAllPoints()
+	button:SetPoint(anchor, element, anchor, col * sizeX * growthX, row * sizeY * growthY)
+end
+
+local function CreateButton(element, options, button)
 	local width = element.width or element.size or 16
 	local height = element.height or element.size or 16
 	button:SetSize(width, height)
@@ -166,31 +182,26 @@ local function CreateButton(element, _, button)
 		button:SetCancelAuraButtons(element.cancelButton)
 	end
 
+	if(options.slotIndex) then
+		--[[ Override: Auras:SetSlotPosition(button, index)
+		Used to anchor aura slots.  
+		Called when new aura buttons have been created.
+
+		* self   - the element used to represent the aura buttons (AuraContainer)
+		* button - the aura button (AuraButton)
+		* index  - the index of the aura button
+		--]]
+		(element.SetSlotPosition or SetSlotPosition) (element, button, options.slotIndex)
+	end
+
 	--[[ Callback: Auras:PostCreateButton(button)
 	Called after a new aura button has been created.
 
-	* self   - the element used to represent the aura buttons (AuraContainer)
-	* button - the aura button (AuraButton)
+	* self    - the element used to represent the aura buttons (AuraContainer)
+	* button  - the aura button (AuraButton)
+	* options - the aura group/slot options passed through to CreateButton (table)
 	--]]
-	if(element.PostCreateButton) then element:PostCreateButton(button) end
-end
-
-
-local function setSlotPosition(element, index, slot)
-	local width = element.width or element.size or 16
-	local height = element.height or element.size or 16
-	local sizeX = width + (element.spacingX or element.spacing or 0)
-	local sizeY = height + (element.spacingY or element.spacing or 0)
-	local anchor = element.initialAnchor or 'BOTTOMLEFT'
-	local growthX = (element.growthX == 'LEFT' and -1) or 1
-	local growthY = (element.growthY == 'DOWN' and -1) or 1
-	local cols = element.maxCols or math.floor(element:GetAuraLayoutRowWidth() / sizeX + 0.5)
-
-	local col = (index - 1) % cols
-	local row = math.floor((index - 1) / cols)
-
-	slot:ClearAllPoints()
-	slot:SetPoint(anchor, element, anchor, col * sizeX * growthX, row * sizeY * growthY)
+	if(element.PostCreateButton) then element:PostCreateButton(button, options) end
 end
 
 local elementMixin = {}
@@ -198,7 +209,7 @@ local elementMixin = {}
 Defines a group of auras to display on the element.  
 This can be defined multiple times.
 
-* filter  - aura filter for this group ([AuraFilter](https://warcraft.wiki.gg/wiki/API_UnitAura#AuraFilters))
+* filter  - aura filter for this group ([AuraFilter](https://warcraft.wiki.gg/wiki/API_type/AuraFilters))
 * options - options for this group (TODO: link to wiki)
 
 ## Notes
@@ -266,7 +277,7 @@ Defines a slot for a single buff or debuff to create from the element.
 The slot can be manually positioned if necessary.  
 This can be defined multiple times.
 
-* filter  - aura filter for this group ([AuraFilter](https://warcraft.wiki.gg/wiki/API_UnitAura#AuraFilters))
+* filter  - aura filter for this group ([AuraFilter](https://warcraft.wiki.gg/wiki/API_type/AuraFilters))
 * options - options for this group (TODO: link to wiki)
 
 ## Notes
@@ -302,10 +313,11 @@ function elementMixin:AddSlot(filter, options)
 	local index = (STATE[frame].slotIndex or 0) + 1
 	STATE[frame].slotIndex = index
 
+	-- need to inject index into options so we can position the slot on creation
+	options.slotIndex = index
+
 	local key = self:GetDebugName() .. index
 	local slot = self:AddAuraSlot(key, filter, options)
-
-	setSlotPosition(self, index, slot)
 
 	return slot
 end
@@ -322,15 +334,15 @@ All of these options are provided as a convenience, and can be applied after cre
 methods on the element.
 
 .maxWidth      - Max width of the element. Defaults to the parent's width (number?)
-.initialAnchor - Anchor point for the element. Defaults to 'BOTTOMLEFT' (string)
-.growthX       - Horizontal growth direction. Defaults to 'RIGHT' (string)
-.growthY       - Vertical growth direction. Defaults to 'UP' (string)
-.padding       - Padding around the element. Defaults to 0 (number)
-.paddingLeft   - Padding on the left side of the element. Takes priority over `padding` (number)
-.paddingRight  - Padding on the right side of the element. Takes priority over `padding` (number)
-.paddingTop    - Padding on the top side of the element. Takes priority over `padding` (number)
-.paddingBottom - Padding on the bottom side of the element. Takes priority over `padding` (number)
-.policies      - ? TODO
+.initialAnchor - Anchor point for the element. Defaults to 'TOPLEFT' (string?)
+.growthX       - Horizontal growth direction. Defaults to 'RIGHT' (string?)
+.growthY       - Vertical growth direction. Defaults to 'UP' (string?)
+.padding       - Padding around the element. Defaults to 0 (number?)
+.paddingLeft   - Padding on the left side of the element. Takes priority over `padding` (number?)
+.paddingRight  - Padding on the right side of the element. Takes priority over `padding` (number?)
+.paddingTop    - Padding on the top side of the element. Takes priority over `padding` (number?)
+.paddingBottom - Padding on the bottom side of the element. Takes priority over `padding` (number?)
+.policies      - Policy for how auras should be processed by the container. See CustomAuraContainerProcessAuraPolicyDefaultOptions (table?)
 
 ## Returns
 
@@ -349,7 +361,7 @@ oUF:RegisterMetaFunction('CreateAuras', function(self, options)
 
 	-- element-wide options we'll just set directly from options
 	element:SetAuraLayoutRowWidth(options.maxWidth or self:GetWidth())
-	element:SetAuraLayoutAnchorPoint(options.initialAnchor or 'BOTTOMLEFT')
+	element:SetAuraLayoutAnchorPoint(options.initialAnchor or 'TOPLEFT')
 
 	local growthX = (options.growthX == 'LEFT' and -1) or 1
 	local growthY = (options.growthY == 'DOWN' and -1) or 1

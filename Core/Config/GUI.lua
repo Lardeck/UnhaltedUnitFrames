@@ -3563,7 +3563,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraSlot, refre
     SizeSlider:SetValue(AuraDB.Size)
     SizeSlider:SetSliderValues(8, 64, 1)
     SizeSlider:SetRelativeWidth(0.25)
-    SizeSlider:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Size = value reloadRequired = true UpdateAuras() end)
+    SizeSlider:SetCallback("OnValueChanged", function(_, _, value) AuraDB.Size = value UpdateAuras() end)
     LayoutContainer:AddChild(SizeSlider)
 
     local SpacingSlider = AG:Create("Slider")
@@ -3693,8 +3693,8 @@ local function CreateAuraSettings(containerParent, unit, refreshScrollFrame)
     containerParent:AddChild(FrameStrataDropdown)
 
     local function CreateAuraContainerManager(managerParent)
-        local selectedSlot = GetSavedSubTab(unit, "AuraContainerSlot", "BOTTOMLEFT")
-        if not UUF.AURA_CONTAINER_SLOT_NAMES[selectedSlot] then selectedSlot = "BOTTOMLEFT" end
+        local selectedSlot = GetSavedSubTab(unit, "AuraContainerSlot", "TOPLEFT")
+        if not UUF.AURA_CONTAINER_SLOT_NAMES[selectedSlot] then selectedSlot = "TOPLEFT" end
         local AnchorSelector = AG:Create("UUFAnchorButtons")
         local SettingsContainer = AG:Create("SimpleGroup")
         SettingsContainer:SetLayout("Flow")

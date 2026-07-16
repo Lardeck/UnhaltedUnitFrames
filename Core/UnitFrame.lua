@@ -57,18 +57,17 @@ function UUF:CreateUnitFrame(unitFrame, unit)
 			if not value then
 				UUF:UnregisterRangeFrame(frame)
 				UUF:UnregisterTargetGlowIndicatorFrame(frame)
-				if frame.DispelHighlightUnit then UUF:UnregisterDispelHighlightEvents(frame) end
 				frame.UUFGroupUnit = nil
 				return
 			end
 			local RaidDB = UUF:GetUnitDB(frame, value)
 			if not RaidDB or not RaidDB.Enabled then return end
-			if frame.DispelHighlightUnit and frame.DispelHighlightUnit ~= value then UUF:UnregisterDispelHighlightEvents(frame) end
 			UUF:RegisterRangeFrame(frame, value)
 			UUF:RegisterTargetGlowIndicatorFrame(frame, value)
 			if frame.UUFGroupUnit ~= value then
 				frame.UUFGroupUnit = value
 				if frame.DispelHighlight then UUF:UpdateUnitDispelHighlight(frame, value) end
+				if frame.AuraContainers then UUF:UpdateUnitAuraEligibility(frame, value) end
 			end
 			if frame.Health then frame.Health:ForceUpdate() end
 			if frame.Tags then for configuredTag in pairs(RaidDB.Tags) do UUF:UpdateUnitTag(frame, value, configuredTag) end elseif frame.UpdateTags then frame:UpdateTags() end
@@ -144,7 +143,6 @@ function UUF:SpawnUnitFrame(unit)
         UUF[unit:upper()] = oUF:Spawn(unit, UUF:FetchFrameName(unit))
         UUF:RegisterTargetGlowIndicatorFrame(UUF:FetchFrameName(unit), unit)
         UUF[unit:upper()]:SetFrameStrata(FrameDB.FrameStrata)
-        if unit == "player" or unit == "target" or unit == "focus" then UUF:RegisterDispelHighlightEvents(UUF[unit:upper()], unit) end
     end
 
     if unit == "player" or unit == "target" then

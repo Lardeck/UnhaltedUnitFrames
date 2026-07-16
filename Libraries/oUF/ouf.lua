@@ -1,6 +1,6 @@
 local parent, ns = ...
 local global = C_AddOns.GetAddOnMetadata(parent, 'X-oUF')
-local _VERSION = 'aabc3a8'
+local _VERSION = '3ee19da'
 if(_VERSION:find('project%-version')) then
 	_VERSION = 'devel'
 end
@@ -12,6 +12,7 @@ local argcheck = Private.argcheck
 local print = Private.print --luacheck: no unused
 local unitExists = Private.unitExists
 local nierror = Private.nierror
+local allocateAuraContainers = Private.AllocateAuraContainers
 
 local styles, style = {}
 local callback, objects, headers = {}, {}, {}
@@ -201,6 +202,9 @@ for k, v in next, {
 		for _, func in next, self.__elements do
 			func(self, event, unit)
 		end
+
+		-- special handling for auras since it's not a real element
+		self:UpdateAllAuras()
 
 		if(self.PostUpdate) then
 			--[[ Callback: frame:PostUpdate(event)
@@ -619,6 +623,16 @@ do
 		end
 	end
 
+	--[[ header:SetNumAuraContainers(numContainers)
+	Sets the amount of aura containers to pre-create for each header child.
+
+	The default is 3.
+	--]]
+	function headerMixin:SetNumAuraContainers(numContainers)
+		-- up to 40 raid units can exist at the same time
+		allocateAuraContainers(self.prefix .. 'UnitButton', 40, numContainers)
+	end
+
 	--[[ oUF:SpawnHeader(overrideName, template, ...)
 	Used to create a group header and apply the currently active style to it.
 
@@ -664,6 +678,7 @@ do
 
 		header.style = style
 		header.styleFunction = styleProxy
+		header.prefix = name
 
 		-- Expose the header through oUF.headers.
 		table.insert(headers, header)
@@ -708,6 +723,8 @@ do
 		if(header:GetAttribute('showParty')) then
 			self:DisableBlizzard('party')
 		end
+
+		header:SetNumAuraContainers(3)
 
 		return header
 	end
@@ -780,6 +797,7 @@ do
 		argcheck(callback, 2, 'function', 'nil')
 		self.targetCallback = callback
 	end
+
 	--[[ nameplates:SetAddedCallback(callback)
 	Sets a callback function to be triggered whenever a nameplate has been added.  
 	The payload for the callback is `(nameplate, event, unit)`.
@@ -788,6 +806,7 @@ do
 		argcheck(callback, 2, 'function', 'nil')
 		self.addedCallback = callback
 	end
+
 	--[[ nameplates:SetRemovedCallback(callback)
 	Sets a callback function to be triggered whenever a nameplate has been removed.  
 	The payload for the callback is `(nameplate, event, unit)`.
@@ -851,6 +870,16 @@ do
 		end
 
 		updateDriver(self)
+	end
+
+	--[[ nameplates:SetNumAuraContainers(numContainers)
+	Sets the amount of aura containers to pre-allocate for each nameplate.
+
+	The default is 3.
+	--]]
+	function nameplateDriverMixin:SetNumAuraContainers(numContainers)
+		-- up to 40 nameplates can exist at the same time
+		allocateAuraContainers(self.prefix .. 'NamePlate', 40, numContainers)
 	end
 
 	local function driverEventHandler(self, event, unit)
@@ -955,6 +984,8 @@ do
 		else
 			nameplateDriver:RegisterEvent('PLAYER_LOGIN')
 		end
+
+		nameplateDriver:SetNumAuraContainers(3)
 
 		return nameplateDriver
 	end

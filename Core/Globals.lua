@@ -277,6 +277,11 @@ function UUF:ApplyCooldownText(icon, textRegion, unit, unitFrame)
     end
 end
 
+function UUF:GetCooldownDurationFormatter()
+	CooldownDurationFormatter:SetBreakpoints(UUF.db.profile.General.CooldownText.CooldownBreakpoints)
+	return CooldownDurationFormatter
+end
+
 function UUF:Capitalize(STR)
     return "|cFF8080FF" .. (STR:gsub("^%l", string.upper)) .. "|r"
 end
@@ -383,8 +388,7 @@ function UUF:LoadCustomColours()
                 oUF.colors.dispel[index] = oUF:CreateColor(color[1], color[2], color[3])
             end
         end
-        UUF.dispelColorGeneration = (UUF.dispelColorGeneration or 0) + 1
-    end
+	end
 
     for _, obj in next, oUF.objects do
         if obj.UpdateTags then
@@ -712,85 +716,47 @@ function UUF:UpdateHealthBarLayout(unitFrame, unit)
 end
 
 
+UUF.MAX_AURA_CONTAINERS = 10
+
+function UUF:GetAuraContainerKeys(AurasDB)
+	local containerKeys = {}
+	for containerKey, ContainerDB in pairs(AurasDB and AurasDB.Containers or {}) do
+		if type(containerKey) == "string" and type(ContainerDB) == "table" then containerKeys[#containerKeys + 1] = containerKey end
+	end
+	table.sort(containerKeys, function(firstKey, secondKey)
+		local firstIndex = tonumber(firstKey:match("^Container #(%d+)$"))
+		local secondIndex = tonumber(secondKey:match("^Container #(%d+)$"))
+		if firstIndex and secondIndex then return firstIndex < secondIndex end
+		if firstIndex or secondIndex then return firstIndex ~= nil end
+		local firstLower, secondLower = firstKey:lower(), secondKey:lower()
+		return firstLower == secondLower and firstKey < secondKey or firstLower < secondLower
+	end)
+	return containerKeys
+end
+
 UUF.AURA_FILTERS = {
-    Buffs = {
-        {Key = "RaidPlayerDispellable", Group = "General", Title = "Player Dispellable", Desc = "Show buffs marked as dispellable by the |cFF8080FFplayer|r."},
-        {Key = "Player", Group = "Player (You)", Title = "All", Desc = "Show every buff applied by the |cFF8080FFplayer|r or their vehicle."},
-        {Key = "CrowdControlPlayer", Group = "Player (You)", Title = "Crowd Control", Desc = "Show crowd-control buffs applied by the |cFF8080FFplayer|r."},
-        {Key = "BigDefensivePlayer", Group = "Player (You)", Title = "Big Defensive", Desc = "Show major defensive buffs applied by the |cFF8080FFplayer|r."},
-        {Key = "ExternalDefensivePlayer", Group = "Player (You)", Title = "External Defensive", Desc = "Show external defensive buffs applied by the |cFF8080FFplayer|r."},
-        {Key = "RaidInCombatPlayer", Group = "Player (You)", Title = "Raid in Combat", Desc = "Show |cFF8080FFplayer|r-cast buffs marked for raid frames while in combat."},
-        {Key = "CancelablePlayer", Group = "Player (You)", Title = "Cancelable", Desc = "Show cancelable buffs applied by the player."},
-        {Key = "NotCancelablePlayer", Group = "Player (You)", Title = "Not Cancelable", Desc = "Show non-cancelable buffs applied by the player."},
-        {Key = "RaidPlayer", Group = "Player (You)", Title = "Raid", Desc = "Show player-cast buffs marked for raid frames."},
-        {Key = "CrowdControl", Group = "Others (Not You)", Title = "Crowd Control", Desc = "Show crowd-control buffs applied by |cFF8080FFother|r units."},
-        {Key = "BigDefensive", Group = "Others (Not You)", Title = "Big Defensive", Desc = "Show major defensive buffs applied by |cFF8080FFother|r units."},
-        {Key = "ExternalDefensive", Group = "Others (Not You)", Title = "External Defensive", Desc = "Show external defensive buffs applied by |cFF8080FFother|r units."},
-        {Key = "RaidInCombat", Group = "Others (Not You)", Title = "Raid in Combat", Desc = "Show |cFF8080FFother|r-cast buffs marked for raid frames while in combat."},
-        {Key = "Cancelable", Group = "Others (Not You)", Title = "Cancelable", Desc = "Show cancelable buffs applied by |cFF8080FFother|r units."},
-        {Key = "NotCancelable", Group = "Others (Not You)", Title = "Not Cancelable", Desc = "Show non-cancelable buffs applied by |cFF8080FFother|r units."},
-        {Key = "Raid", Group = "Others (Not You)", Title = "Raid", Desc = "Show |cFF8080FFother|r-cast buffs marked for raid frames."},
-    },
-    Debuffs = {
-        {Key = "Typed", Group = "General", Title = "Typed", Desc = "Show debuffs with a debuff type, such as |cFF3296FFMagic|r, |cFF9600FFCurse|r, |cFF966400Disease|r, |cFF009600Poison|r, or |cFFC80000Bleed|r."},
-        {Key = "RaidPlayerDispellable", Group = "General", Title = "Player Dispellable", Desc = "Show debuffs marked as dispellable by the |cFF8080FFplayer|r."},
-        {Key = "Player", Group = "Player (You)", Title = "All", Desc = "Show every debuff applied by the |cFF8080FFplayer|r or their vehicle."},
-        {Key = "CrowdControlPlayer", Group = "Player (You)", Title = "Crowd Control", Desc = "Show crowd-control debuffs applied by the |cFF8080FFplayer|r."},
-        {Key = "BigDefensivePlayer", Group = "Player (You)", Title = "Big Defensive", Desc = "Show major defensive debuffs applied by the |cFF8080FFplayer|r."},
-        {Key = "ExternalDefensivePlayer", Group = "Player (You)", Title = "External Defensive", Desc = "Show external defensive debuffs applied by the |cFF8080FFplayer|r."},
-        {Key = "RaidInCombatPlayer", Group = "Player (You)", Title = "Raid in Combat", Desc = "Show |cFF8080FFplayer|r-cast debuffs marked for raid frames while in combat."},
-        {Key = "CancelablePlayer", Group = "Player (You)", Title = "Cancelable", Desc = "Show cancelable debuffs applied by the |cFF8080FFplayer|r."},
-        {Key = "NotCancelablePlayer", Group = "Player (You)", Title = "Not Cancelable", Desc = "Show non-cancelable debuffs applied by the |cFF8080FFplayer|r."},
-        {Key = "RaidPlayer", Group = "Player (You)", Title = "Raid", Desc = "Show |cFF8080FFplayer|r-cast debuffs marked for raid frames."},
-        {Key = "CrowdControl", Group = "Others (Not You)", Title = "Crowd Control", Desc = "Show crowd-control debuffs applied by |cFF8080FFother|r units."},
-        {Key = "BigDefensive", Group = "Others (Not You)", Title = "Big Defensive", Desc = "Show major defensive debuffs applied by |cFF8080FFother|r units."},
-        {Key = "ExternalDefensive", Group = "Others (Not You)", Title = "External Defensive", Desc = "Show external defensive debuffs applied by |cFF8080FFother|r units."},
-        {Key = "RaidInCombat", Group = "Others (Not You)", Title = "Raid in Combat", Desc = "Show |cFF8080FFother|r-cast debuffs marked for raid frames while in combat."},
-        {Key = "Cancelable", Group = "Others (Not You)", Title = "Cancelable", Desc = "Show cancelable debuffs applied by |cFF8080FFother|r units."},
-        {Key = "NotCancelable", Group = "Others (Not You)", Title = "Not Cancelable", Desc = "Show non-cancelable debuffs applied by |cFF8080FFother|r units."},
-        {Key = "Raid", Group = "Others (Not You)", Title = "Raid", Desc = "Show |cFF8080FFother|r-cast debuffs marked for raid frames."},
-    }
-}
-
-UUF.AURA_BLACKLIST = {
-    -- Rogue Poisons
-    [2823] = true,      -- Deadly Poison
-    [315584] = true,    -- Instant Poison
-    [3408] = true,      -- Crippling Poison
-    [381637] = true,    -- Atrophic Poison
-    [381664] = true,    -- Amplifying Poison
-    [8679] = true,      -- Wound Poison
-
-    -- Shaman Imbuements
-    [319773] = true,    -- Windfury Weapon
-    [319778] = true,    -- Flametongue Weapon
-    [382021] = true,    -- Earthliving Weapon
-    [382022] = true,    -- Earthliving Weapon
-    [457496] = true,    -- Tidecaller's Guard
-    [457481] = true,    -- Tidecaller's Guard
-    [462757] = true,    -- Thunderstrike Ward
-    [462742] = true,    -- Thunderstrike Ward
-
-    -- Skyriding
-    [404464] = true,    -- Flight Style: Skyriding
-    [404468] = true,    -- Flight Style: Steady
-    [427490] = true,    -- Ride Along
-    [447959] = true,    -- Ride Along - Enabled
-    [447960] = true,    -- Ride Along - Inactive
-
-    -- Other
-    [160455] = true,    -- Hunter Pet Fatigued
-    [26013] = true,     -- Deserter
-    [264689] = true,    -- Hunter Pet Fatigued
-    [377234] = true,    -- Thrill of the Skies
-    [390435] = true,    -- Exhaustion
-    [433568] = true,    -- Rite of Sanctification
-    [433583] = true,    -- Rite of Adjuration
-    [57723] = true,     -- Exhaustion
-    [57724] = true,     -- Sated
-    [71041] = true,     -- Dungeon Deserter
-    [80354] = true,     -- Temporal Displacement
-    [95809] = true,     -- Hunter Pet Insanity
+	{Key = "Player", Source = "PLAYER", Group = "Player (You)", Title = "All", Desc = "Only auras cast by the player, their pet, or their vehicle."},
+	{Key = "RaidPlayer", Token = "RAID", Source = "PLAYER", Group = "Player (You)", Title = "Raid", Desc = "Helpful auras the player can apply and harmful auras the player can dispel."},
+	{Key = "RaidInCombatPlayer", Token = "RAID_IN_COMBAT", Source = "PLAYER", Group = "Player (You)", Title = "Raid in Combat", Desc = "Auras flagged to show on raid frames while in combat."},
+	{Key = "RaidPlayerDispellablePlayer", Token = "RAID_PLAYER_DISPELLABLE", Source = "PLAYER", Group = "Player (You)", Title = "Raid Dispellable", Desc = "Auras someone in the player's raid can dispel, including helpful enrages on enemies."},
+	{Key = "DispellablePlayer", Token = "DISPELLABLE", Source = "PLAYER", Group = "Player (You)", Title = "Dispellable", Desc = "Auras that are dispellable, whether or not the player's raid can dispel them."},
+	{Key = "ImportantPlayer", Token = "IMPORTANT", Source = "PLAYER", Group = "Player (You)", Title = "Important", Desc = "Auras flagged as important, including helpful auras shown on enemy nameplates even when they are not stealable."},
+	{Key = "CrowdControlPlayer", Token = "CROWD_CONTROL", Source = "PLAYER", Group = "Player (You)", Title = "Crowd Control", Desc = "Auras with a crowd-control effect, such as a stun or fear."},
+	{Key = "BigDefensivePlayer", Token = "BIG_DEFENSIVE", Source = "PLAYER", Group = "Player (You)", Title = "Big Defensive", TreeTitle = "Big Defensives", Desc = "Auras categorized as big defensives."},
+	{Key = "ExternalDefensivePlayer", Token = "EXTERNAL_DEFENSIVE", Source = "PLAYER", Group = "Player (You)", Title = "External Defensive", TreeTitle = "External Defensives", Desc = "Auras categorized as external defensives."},
+	{Key = "CancelablePlayer", Token = "CANCELABLE", Source = "PLAYER", Group = "Player (You)", Title = "Cancelable", Desc = "Auras the player can cancel."},
+	{Key = "NotCancelablePlayer", Token = "!CANCELABLE", Source = "PLAYER", Group = "Player (You)", Title = "Not Cancelable", Desc = "Auras the player cannot cancel."},
+	{Key = "Others", Source = "!PLAYER", Group = "Others (Not You)", Title = "All", Desc = "Only auras not cast by the player, their pet, or their vehicle."},
+	{Key = "Raid", Token = "RAID", Source = "!PLAYER", Group = "Others (Not You)", Title = "Raid", Desc = "Helpful auras the player can apply and harmful auras the player can dispel."},
+	{Key = "RaidInCombat", Token = "RAID_IN_COMBAT", Source = "!PLAYER", Group = "Others (Not You)", Title = "Raid in Combat", Desc = "Auras flagged to show on raid frames while in combat."},
+	{Key = "RaidPlayerDispellableOthers", Token = "RAID_PLAYER_DISPELLABLE", Source = "!PLAYER", Group = "Others (Not You)", Title = "Raid Dispellable", Desc = "Auras someone in the player's raid can dispel, including helpful enrages on enemies."},
+	{Key = "Dispellable", Token = "DISPELLABLE", Source = "!PLAYER", Group = "Others (Not You)", Title = "Dispellable", Desc = "Auras that are dispellable, whether or not the player's raid can dispel them."},
+	{Key = "Important", Token = "IMPORTANT", Source = "!PLAYER", Group = "Others (Not You)", Title = "Important", Desc = "Auras flagged as important, including helpful auras shown on enemy nameplates even when they are not stealable."},
+	{Key = "CrowdControl", Token = "CROWD_CONTROL", Source = "!PLAYER", Group = "Others (Not You)", Title = "Crowd Control", Desc = "Auras with a crowd-control effect, such as a stun or fear."},
+	{Key = "BigDefensive", Token = "BIG_DEFENSIVE", Source = "!PLAYER", Group = "Others (Not You)", Title = "Big Defensive", TreeTitle = "Big Defensives", Desc = "Auras categorized as big defensives."},
+	{Key = "ExternalDefensive", Token = "EXTERNAL_DEFENSIVE", Source = "!PLAYER", Group = "Others (Not You)", Title = "External Defensive", TreeTitle = "External Defensives", Desc = "Auras categorized as external defensives."},
+	{Key = "Cancelable", Token = "CANCELABLE", Source = "!PLAYER", Group = "Others (Not You)", Title = "Cancelable", Desc = "Auras the player can cancel."},
+	{Key = "NotCancelable", Token = "!CANCELABLE", Source = "!PLAYER", Group = "Others (Not You)", Title = "Not Cancelable", Desc = "Auras the player cannot cancel."},
 }
 
 UUF.SCMAnchors = {

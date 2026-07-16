@@ -1,168 +1,98 @@
 local _, UUF = ...
-local oUF = UUF.oUF
 
-local dispelTypeMap = {
-    Magic = oUF.Enum.DispelType.Magic,
-    Curse = oUF.Enum.DispelType.Curse,
-    Disease = oUF.Enum.DispelType.Disease,
-    Poison = oUF.Enum.DispelType.Poison,
-    Bleed = oUF.Enum.DispelType.Bleed,
+local DispelSlots = {
+	{Key = "Magic", Level = 5},
+	{Key = "Curse", Level = 4},
+	{Key = "Disease", Level = 3},
+	{Key = "Poison", Level = 2},
+	{Key = "Bleed", Level = 1},
 }
 
-local DispelHighlightFrames = {}
-local DispelTypes
+local DispelHighlightState = setmetatable({}, {__mode = "k"})
+local DispelCapabilityEventFrame = CreateFrame("Frame")
+local DisabledCandidateFilters = {includeDispelTypes = {}}
+local DispelCandidateFilters = {}
+for _, dispelSlot in ipairs(DispelSlots) do DispelCandidateFilters[dispelSlot.Key] = {includeDispelTypes = {[dispelSlot.Key] = true}} end
 
-local DispelEventFrame = CreateFrame("Frame")
-DispelEventFrame:RegisterEvent("SPELLS_CHANGED")
-DispelEventFrame:RegisterEvent("PLAYER_TALENT_UPDATE")
-DispelEventFrame:SetScript("OnEvent", function()
-	DispelTypes = UUF.LD and UUF.LD:GetMyDispelTypes()
-	for unitFrame in pairs(DispelHighlightFrames) do UUF:UpdateUnitDispelState(unitFrame, unitFrame.DispelHighlightUnit) end
+DispelCapabilityEventFrame:RegisterEvent("SPELLS_CHANGED")
+DispelCapabilityEventFrame:RegisterEvent("PLAYER_TALENT_UPDATE")
+DispelCapabilityEventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+DispelCapabilityEventFrame:RegisterEvent("PLAYER_FOCUS_CHANGED")
+DispelCapabilityEventFrame:RegisterEvent("UNIT_FACTION")
+DispelCapabilityEventFrame:SetScript("OnEvent", function(_, event, eventUnit)
+	for unitFrame, state in pairs(DispelHighlightState) do
+		local unit = state.Unit
+		local unitToken = unitFrame.unit
+		if not unitToken then unitToken = unit == "partyplayer" and "player" or unit end
+		local update = event == "SPELLS_CHANGED" or event == "PLAYER_TALENT_UPDATE" or event == "UNIT_FACTION" and (eventUnit == "player" or unitToken == eventUnit) or event == "PLAYER_TARGET_CHANGED" and unit == "target" or event == "PLAYER_FOCUS_CHANGED" and unit == "focus"
+		if update then UUF:UpdateUnitDispelHighlight(unitFrame, unit) end
+	end
 end)
 
-function UUF:UpdateDispelColorCurve(unitFrame)
-    if not unitFrame.dispelColorCurve then return end
-    unitFrame.dispelColorCurve:ClearPoints()
-    for dispelType, index in pairs(dispelTypeMap) do
-        local color = oUF.colors.dispel[index]
-        if color then
-            unitFrame.dispelColorCurve:AddPoint(index, color)
-        end
-    end
-    unitFrame.dispelColorCurveGeneration = UUF.dispelColorGeneration
-end
-
 function UUF:CreateUnitDispelHighlight(unitFrame, unit)
+	local container = unitFrame:CreateAuras({maxWidth = 1, initialAnchor = "CENTER"})
+	if not container then return end
+	local state = {Unit = unit, Slots = {}, EnabledTypes = {}}
 	local DispelHighlightDB = UUF:GetUnitDB(unitFrame, unit).HealthBar.DispelHighlight
-	if not unitFrame.DispelHighlight then
-		local DispelHighlight = unitFrame.Health:CreateTexture(UUF:FetchFrameName(unit) .. "_DispelHighlight", "OVERLAY")
-		DispelHighlight:ClearAllPoints()
+	DispelHighlightState[unitFrame] = state
+	container.maxCols = 1
+	container.size = 1
+	container.spacing = -1
+	container.CreateButton = function(_, options, button)
+		button:SetSize(1, 1)
+		button:SetFrameLevel(unitFrame.Health:GetFrameLevel() + options.Level)
+		button:EnableMouse(false)
+		local texture = button:CreateTexture(nil, "ARTWORK", nil, 3)
+		texture:SetBlendMode("BLEND")
 		if DispelHighlightDB.Style == "GRADIENT" then
-			DispelHighlight:SetPoint("TOPLEFT", unitFrame, "TOPLEFT", 1, -1)
-			DispelHighlight:SetPoint("BOTTOMRIGHT", unitFrame, "BOTTOMRIGHT", -1, 1)
-			DispelHighlight:SetTexture("Interface\\AddOns\\UnhaltedUnitFrames\\Media\\Textures\\Gradient.png")
-			DispelHighlight:SetAlpha(1)
+			texture:SetPoint("TOPLEFT", unitFrame, "TOPLEFT", 1, -1)
+			texture:SetPoint("BOTTOMRIGHT", unitFrame, "BOTTOMRIGHT", -1, 1)
+			texture:SetTexture("Interface\\AddOns\\UnhaltedUnitFrames\\Media\\Textures\\Gradient.png")
+			texture:SetAlpha(1)
 		else
-			local barTexture = unitFrame.Health and unitFrame.Health:GetStatusBarTexture()
-			if barTexture then
-				DispelHighlight:SetAllPoints(barTexture)
-			else
-				DispelHighlight:SetAllPoints(unitFrame.Health)
-			end
-			DispelHighlight:SetTexture("Interface\\Buttons\\WHITE8X8")
-			DispelHighlight:SetAlpha(0.75)
+			local statusBarTexture = unitFrame.Health:GetStatusBarTexture()
+			texture:SetPoint("TOPLEFT", unitFrame.Health, "TOPLEFT")
+			texture:SetPoint("BOTTOMRIGHT", statusBarTexture or unitFrame.Health, "BOTTOMRIGHT")
+			texture:SetColorTexture(1, 1, 1, 1)
+			texture:SetAlpha(0.75)
 		end
-		DispelHighlight:SetBlendMode("BLEND")
-		DispelHighlight:Hide()
-
-		unitFrame.DispelHighlight = DispelHighlight
-
-		if not unitFrame.dispelColorCurve then
-			unitFrame.dispelColorCurve = C_CurveUtil.CreateColorCurve()
-			unitFrame.dispelColorCurve:SetType(Enum.LuaCurveType.Step)
-			UUF:UpdateDispelColorCurve(unitFrame)
-		end
+		local colour = UUF.db.profile.General.Colours.Dispel[options.DispelType]
+		texture:SetVertexColor(colour[1], colour[2], colour[3])
 	end
 
+	for index, dispelSlot in ipairs(DispelSlots) do
+		container:AddSlot("HARMFUL|DISPELLABLE", {
+			candidateFilters = DisabledCandidateFilters,
+			DispelType = dispelSlot.Key,
+			Level = dispelSlot.Level,
+		})
+		state.Slots[dispelSlot.Key] = container:GetDebugName() .. index
+	end
+	container:SetPoint("CENTER", unitFrame.Health, "CENTER")
+	container:SetSize(1, 1)
+	unitFrame.DispelHighlight = container
 	UUF:UpdateUnitDispelHighlight(unitFrame, unit)
 end
 
 function UUF:UpdateUnitDispelHighlight(unitFrame, unit)
-	if not unitFrame.DispelHighlight then return end
-	local DispelHighlightDB = UUF:GetUnitDB(unitFrame, unit).HealthBar.DispelHighlight
-	if unitFrame.DispelHighlight then
-		if DispelHighlightDB.Enabled then
-			UUF:RegisterDispelHighlightEvents(unitFrame, unit)
-			unitFrame.DispelHighlight:ClearAllPoints()
-			if DispelHighlightDB.Style == "GRADIENT" then
-				unitFrame.DispelHighlight:SetPoint("TOPLEFT", unitFrame, "TOPLEFT", 1, -1)
-				unitFrame.DispelHighlight:SetPoint("BOTTOMRIGHT", unitFrame, "BOTTOMRIGHT", -1, 1)
-				unitFrame.DispelHighlight:SetTexture("Interface\\AddOns\\UnhaltedUnitFrames\\Media\\Textures\\Gradient.png")
-				unitFrame.DispelHighlight:SetAlpha(1)
-			else
-				local barTexture = unitFrame.Health and unitFrame.Health:GetStatusBarTexture()
-				if barTexture then
-					unitFrame.DispelHighlight:SetAllPoints(barTexture)
-				else
-					unitFrame.DispelHighlight:SetAllPoints(unitFrame.Health)
-				end
-				unitFrame.DispelHighlight:SetTexture("Interface\\Buttons\\WHITE8X8")
-				unitFrame.DispelHighlight:SetAlpha(0.75)
-			end
-			UUF:UpdateUnitDispelState(unitFrame, unit)
-		else
-			UUF:UnregisterDispelHighlightEvents(unitFrame)
-			unitFrame.DispelHighlight:Hide()
+	local container = unitFrame.DispelHighlight
+	local state = DispelHighlightState[unitFrame]
+	if not container or not state then return end
+	state.Unit = unit
+	local unitToken = unitFrame.unit
+	if not unitToken then unitToken = unit == "partyplayer" and "player" or unit end
+	local dispelTypes = UUF.LD:GetMyDispelTypes()
+	for dispelType, slotKey in pairs(state.Slots) do
+		local typeEnabled = dispelTypes[dispelType] and true or false
+		if state.EnabledTypes[dispelType] ~= typeEnabled then
+			state.EnabledTypes[dispelType] = typeEnabled
+			container:SetAuraSlotCandidateFilters(slotKey, typeEnabled and DispelCandidateFilters[dispelType] or DisabledCandidateFilters)
 		end
 	end
-end
-
-function UUF:UpdateUnitDispelState(unitFrame, unit)
-	if not unitFrame.DispelHighlight then return end
-	if not UUF:GetUnitDB(unitFrame, unit).HealthBar.DispelHighlight.Enabled then
-		unitFrame.DispelHighlight:Hide()
-		return
-	end
-	local unitToken = unit == "partyplayer" and "player" or unit
-
-	local LibDispel = UUF.LD
-	if not LibDispel then
-		unitFrame.DispelHighlight:Hide()
-		return
-	end
-
-	if unitFrame.dispelColorCurve and unitFrame.dispelColorCurveGeneration ~= UUF.dispelColorGeneration then
-		UUF:UpdateDispelColorCurve(unitFrame)
-	end
-
-	if not UnitIsUnit(unitToken, "player") and not UnitIsFriend("player", unitToken) then
-		unitFrame.DispelHighlight:Hide()
-		return
-	end
-
-	DispelTypes = DispelTypes or LibDispel:GetMyDispelTypes()
-	if not (DispelTypes.Magic or DispelTypes.Curse or DispelTypes.Disease or DispelTypes.Poison or DispelTypes.Bleed) then
-		unitFrame.DispelHighlight:Hide()
-		return
-	end
-
-	local bestAura = C_UnitAuras.GetAuraDataByIndex(unitToken, 1, "HARMFUL|RAID")
-	local bestAuraInstanceID = bestAura and bestAura.auraInstanceID or nil
-
-	if bestAuraInstanceID then
-		local color = C_UnitAuras.GetAuraDispelTypeColor(unitToken, bestAuraInstanceID, unitFrame.dispelColorCurve)
-
-		if color then
-			unitFrame.DispelHighlight:SetVertexColor(color:GetRGBA())
-			unitFrame.DispelHighlight:Show()
-		else
-			unitFrame.DispelHighlight:Hide()
-		end
-	else
-		unitFrame.DispelHighlight:Hide()
-	end
-end
-
-function UUF:RegisterDispelHighlightEvents(unitFrame, unit)
-    if not unitFrame.DispelHighlight then return end
-    if unit == "raid" then return end
-    if not UUF:GetUnitDB(unitFrame, unit).HealthBar.DispelHighlight.Enabled then return end
-    local unitToken = unit == "partyplayer" and "player" or unit
-
-    unitFrame.DispelHighlightUnit = unit
-    if not unitFrame.DispelHighlightHandler then
-        unitFrame.DispelHighlightHandler = CreateFrame("Frame")
-        unitFrame.DispelHighlightHandler:SetScript("OnEvent", function() UUF:UpdateUnitDispelState(unitFrame, unitFrame.DispelHighlightUnit) end)
-    end
-
-    unitFrame.DispelHighlightHandler:RegisterUnitEvent("UNIT_AURA", unitToken)
-	DispelHighlightFrames[unitFrame] = true
-end
-
-function UUF:UnregisterDispelHighlightEvents(unitFrame)
-    if not unitFrame.DispelHighlightHandler then return end
-
-    unitFrame.DispelHighlightHandler:UnregisterAllEvents()
-	DispelHighlightFrames[unitFrame] = nil
-    unitFrame.DispelHighlightUnit = nil
+	local canAssist = UnitCanAssist("player", unitToken)
+	local enabled = UUF:GetUnitDB(unitFrame, unit).HealthBar.DispelHighlight.Enabled and not UUF:IsSecretValue(canAssist) and canAssist
+	container:SetUnit(unitToken)
+	container:SetShown(enabled)
+	if not enabled then return end
+	container:UpdateAllAuras()
 end

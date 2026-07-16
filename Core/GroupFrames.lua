@@ -113,7 +113,6 @@ function UUF:UpdateAugmentationRaidFrames()
 			UUF:ForEachAugmentationRaidFrame(function(raidFrame)
 				UUF:UnregisterRangeFrame(raidFrame)
 				UUF:UnregisterTargetGlowIndicatorFrame(raidFrame)
-				if raidFrame.DispelHighlightUnit then UUF:UnregisterDispelHighlightEvents(raidFrame) end
 				raidFrame.UUFGroupUnit = nil
 			end, true)
 		end
@@ -169,7 +168,6 @@ function UUF:UpdateAugmentationRaidFrames()
 		if not assignedUnit then
 			UUF:UnregisterRangeFrame(raidFrame)
 			UUF:UnregisterTargetGlowIndicatorFrame(raidFrame)
-			if raidFrame.DispelHighlightUnit then UUF:UnregisterDispelHighlightEvents(raidFrame) end
 			raidFrame.UUFGroupUnit = nil
 			return
 		end
@@ -207,6 +205,7 @@ function UUF:SpawnAugmentationRaidFrames()
 			"unitsPerColumn", FrameDB.UnitsPerColumn or UUF.MAX_RAID_FRAMES_PER_GROUP,
 			"maxColumns", math.ceil(UUF.MAX_RAID_FRAMES / (FrameDB.UnitsPerColumn or UUF.MAX_RAID_FRAMES_PER_GROUP))
 		)
+	UUF.AUGMENTATION_RAID_HEADER:SetNumAuraContainers(UUF.MAX_AURA_CONTAINERS)
 		UUF.AUGMENTATION_RAID_HEADER:SetParent(UUF.AUGMENTATION_RAID_CONTAINER)
 		UUF.AUGMENTATION_RAID_HEADER:SetVisibility("raid")
 	end
@@ -237,7 +236,6 @@ function UUF:SpawnGroupFrame(groupType)
 			UUF.PARTY_FRAMES[i] = partyFrame
 			UUF:RegisterTargetGlowIndicatorFrame(UUF:FetchFrameName("party" .. i), "party" .. i)
 			UUF:RegisterRangeFrame(UUF:FetchFrameName("party" .. i), "party" .. i)
-			UUF:RegisterDispelHighlightEvents(partyFrame, "party" .. i)
 		end
 		if FrameDB.ShowPlayer then
 			local partyPlayerFrame = oUF:Spawn("player", UUF:FetchFrameName("partyplayer"))
@@ -249,7 +247,6 @@ function UUF:SpawnGroupFrame(groupType)
 			UUF.PARTY_FRAMES[#UUF.PARTY_FRAMES + 1] = partyPlayerFrame
 			UUF:RegisterTargetGlowIndicatorFrame(partyPlayerFrame, "partyplayer")
 			UUF:RegisterRangeFrame(partyPlayerFrame, "player")
-			UUF:RegisterDispelHighlightEvents(partyPlayerFrame, "player")
 		end
 		UUF:CreateMover(groupType)
 		for i = 1, UUF.MAX_PARTY_FRAMES do RegisterUnitWatch(UUF["PARTY" .. i]) end
@@ -289,6 +286,7 @@ function UUF:SpawnGroupFrame(groupType)
 				"maxColumns", 1,
 				"sortMethod", FrameDB.SortBy == "INDEX" and "INDEX" or nil
 			)
+			header:SetNumAuraContainers(UUF.MAX_AURA_CONTAINERS)
 			header:SetSize(FrameDB.Width, FrameDB.Height)
 			header:SetParent(UUF.RAID_CONTAINER)
 			header:SetVisibility("raid")
@@ -313,14 +311,12 @@ function UUF:UpdateGroupFrame(groupType)
 			for _, partyFrame in ipairs(UUF.PARTY_FRAMES) do
 				UUF:UnregisterRangeFrame(partyFrame)
 				UUF:UnregisterTargetGlowIndicatorFrame(partyFrame)
-				if partyFrame.DispelHighlightUnit then UUF:UnregisterDispelHighlightEvents(partyFrame) end
 				partyFrame.UUFGroupUnit = nil
 			end
 		else
 			UUF:ForEachRaidFrame(function(raidFrame)
 				UUF:UnregisterRangeFrame(raidFrame)
 				UUF:UnregisterTargetGlowIndicatorFrame(raidFrame)
-				if raidFrame.DispelHighlightUnit then UUF:UnregisterDispelHighlightEvents(raidFrame) end
 				raidFrame.UUFGroupUnit = nil
 			end, true, UUF.RAID_TEST_MODE)
 		end
@@ -346,20 +342,17 @@ function UUF:UpdateGroupFrame(groupType)
 			if not unit or unit == "raid" then
 				UUF:UnregisterRangeFrame(raidFrame)
 				UUF:UnregisterTargetGlowIndicatorFrame(raidFrame)
-				if raidFrame.DispelHighlightUnit then UUF:UnregisterDispelHighlightEvents(raidFrame) end
 				raidFrame.UUFGroupUnit = nil
 				return
 			end
 			raidFrame:SetSize(UnitDB.Frame.Width, UnitDB.Frame.Height)
 			raidFrame:SetFrameStrata(UnitDB.Frame.FrameStrata)
-			if raidFrame.DispelHighlightUnit and raidFrame.DispelHighlightUnit ~= unit then UUF:UnregisterDispelHighlightEvents(raidFrame) end
 			UUF:UpdateUnitFrame(raidFrame, unit)
 			if assignedUnit then
 				raidFrame.UUFGroupUnit = assignedUnit
 			else
 				UUF:UnregisterRangeFrame(raidFrame)
 				UUF:UnregisterTargetGlowIndicatorFrame(raidFrame)
-				if raidFrame.DispelHighlightUnit then UUF:UnregisterDispelHighlightEvents(raidFrame) end
 				raidFrame.UUFGroupUnit = nil
 			end
 		end, true, UUF.RAID_TEST_MODE)
@@ -376,7 +369,6 @@ function UUF:UpdateGroupIndicators(groupType, onlyUpdateRoles)
 			local partyFrame = UUF["PARTY" .. i]
 			if partyFrame then
 				if not onlyUpdateRoles then
-					if partyFrame.DispelHighlightUnit and partyFrame.DispelHighlightUnit ~= "party" .. i then UUF:UnregisterDispelHighlightEvents(partyFrame) end
 					UUF:RegisterRangeFrame(partyFrame, "party" .. i)
 					UUF:RegisterTargetGlowIndicatorFrame(partyFrame, "party" .. i)
 					if partyFrame.UUFGroupUnit ~= "party" .. i then
@@ -390,7 +382,6 @@ function UUF:UpdateGroupIndicators(groupType, onlyUpdateRoles)
 		end
 		if UUF.PARTYPLAYER then
 			if not onlyUpdateRoles then
-				if UUF.PARTYPLAYER.DispelHighlightUnit and UUF.PARTYPLAYER.DispelHighlightUnit ~= "partyplayer" then UUF:UnregisterDispelHighlightEvents(UUF.PARTYPLAYER) end
 				UUF:RegisterRangeFrame(UUF.PARTYPLAYER, "player")
 				UUF:RegisterTargetGlowIndicatorFrame(UUF.PARTYPLAYER, "partyplayer")
 				if UUF.PARTYPLAYER.UUFGroupUnit ~= "partyplayer" then
@@ -405,7 +396,6 @@ function UUF:UpdateGroupIndicators(groupType, onlyUpdateRoles)
 		UUF:ForEachRaidFrame(function(raidFrame, unit)
 			if unit and unit ~= "raid" then
 				if not onlyUpdateRoles then
-					if raidFrame.DispelHighlightUnit and raidFrame.DispelHighlightUnit ~= unit then UUF:UnregisterDispelHighlightEvents(raidFrame) end
 					UUF:RegisterRangeFrame(raidFrame, unit)
 					UUF:RegisterTargetGlowIndicatorFrame(raidFrame, unit)
 					if raidFrame.UUFGroupUnit ~= unit then
@@ -418,7 +408,6 @@ function UUF:UpdateGroupIndicators(groupType, onlyUpdateRoles)
 			elseif not onlyUpdateRoles then
 				UUF:UnregisterRangeFrame(raidFrame)
 				UUF:UnregisterTargetGlowIndicatorFrame(raidFrame)
-				if raidFrame.DispelHighlightUnit then UUF:UnregisterDispelHighlightEvents(raidFrame) end
 				raidFrame.UUFGroupUnit = nil
 			end
 		end, false, UUF.RAID_TEST_MODE)

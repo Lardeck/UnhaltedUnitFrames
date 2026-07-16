@@ -532,7 +532,7 @@ local function CreateTextureSettings(containerParent)
 
     local CastBarInterruptCooldownColourPicker = AG:Create("ColorPicker")
     CastBarInterruptCooldownColourPicker:SetLabel("Interrupt on Cooldown Colour")
-    local CR4, CG4, CB4 = 235/255, 90/255, 50/255
+    local CR4, CG4, CB4 = 204/255, 204/255, 204/255
     CastBarInterruptCooldownColourPicker:SetColor(CR4, CG4, CB4)
     CastBarInterruptCooldownColourPicker:SetRelativeWidth(0.25)
     CastBarInterruptCooldownColourPicker:SetCallback("OnValueChanged", function(_, _, r, g, b, a) UUF:ForEachUnitDB(function(unitDB) if unitDB.CastBar then unitDB.CastBar.InterruptCooldownColour = {r, g, b} end end) UUF:UpdateAllUnitFrames() end)

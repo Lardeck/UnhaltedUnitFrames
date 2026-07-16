@@ -28,8 +28,55 @@ end
 
 UUF.GUIWidgets.CreateInformationTag = CreateInformationTag
 
+local SCROLL_GUTTER = 3
+
+local function FixScrollFrame(widget)
+	if widget.updateLock then return end
+	widget.updateLock = true
+	local status = widget.status or widget.localstatus
+	local contentHeight = widget.content:GetHeight()
+	local scrollFrameHeight = widget.scrollframe:GetHeight()
+	local scrollable = contentHeight > scrollFrameHeight + 2
+	widget.scrollBarShown = scrollable or nil
+	widget.scrollbar:SetShown(scrollable)
+	if scrollable then widget.scrollbar.ThumbTexture:SetHeight(math.max(widget.scrollbar:GetHeight() * scrollFrameHeight / contentHeight, 24)) end
+	widget.scrollbar:SetValue(scrollable and (status.scrollvalue or 0) or 0)
+	widget:SetScroll(scrollable and (status.scrollvalue or 0) or 0)
+	widget.updateLock = nil
+end
+
+local function SetScrollFrameWidth(widget, width)
+	widget.content.width = math.max(width - SCROLL_GUTTER, 0)
+	widget.content.original_width = width
+	widget.scrollframe:SetPoint("BOTTOMRIGHT", -SCROLL_GUTTER, 0)
+end
+
+local function StyleScrollFrame(widget)
+	if widget.UUFMinimalScrollBar then return end
+	local scrollBar = widget.scrollbar
+	scrollBar.ScrollUpButton:Hide()
+	scrollBar.ScrollDownButton:Hide()
+	scrollBar:ClearAllPoints()
+	scrollBar:SetPoint("TOPRIGHT", widget.frame, "TOPRIGHT")
+	scrollBar:SetPoint("BOTTOMRIGHT", widget.frame, "BOTTOMRIGHT")
+	scrollBar:SetWidth(SCROLL_GUTTER)
+	scrollBar:SetHitRectInsets(-4, -4, 0, 0)
+	scrollBar:SetFrameLevel(widget.frame:GetFrameLevel() + 2)
+	scrollBar:SetThumbTexture("Interface\\Buttons\\WHITE8X8")
+	scrollBar.ThumbTexture:SetWidth(SCROLL_GUTTER)
+	scrollBar.ThumbTexture:SetTexCoord(0, 1, 0, 1)
+	scrollBar.ThumbTexture:SetColorTexture(0.5, 0.5, 1, 0.85)
+	local scrollTrack = scrollBar:CreateTexture(nil, "BACKGROUND")
+	scrollTrack:SetAllPoints()
+	scrollTrack:SetColorTexture(1, 1, 1, 0.12)
+	widget.UUFMinimalScrollBar = true
+end
+
 local function CreateScrollFrame(containerParent)
     local scrollFrame = AG:Create("ScrollFrame")
+	StyleScrollFrame(scrollFrame)
+	scrollFrame.FixScroll = FixScrollFrame
+	scrollFrame.OnWidthSet = SetScrollFrameWidth
     scrollFrame:SetLayout("Flow")
     scrollFrame:SetFullWidth(true)
     containerParent:AddChild(scrollFrame)

@@ -287,25 +287,32 @@ local function GenerateSupportText(parentFrame)
 end
 
 local function BuildMainNavigationTree()
-	local raidNavigation = { text = "Raid", value = "Raid" }
-	if UUF:IsAugmentationEvoker() then raidNavigation.children = {{ text = "Augmentation", value = "Augmentation" }} end
-	local navigationTree = {
-        { text = "General", value = "General" },
-        { text = "Global", value = "Global" },
-        { text = "Cooldown Text", value = "CooldownText" },
-        { text = "Player", value = "Player" },
-        { text = "Target", value = "Target" },
-        { text = "Target of Target", value = "TargetTarget" },
-        { text = "Pet", value = "Pet" },
-        { text = "Focus", value = "Focus" },
-        { text = "Focus Target", value = "FocusTarget" },
-        { text = "Party", value = "Party" },
-		raidNavigation,
-    }
-	navigationTree[#navigationTree + 1] = { text = "Boss", value = "Boss" }
-	navigationTree[#navigationTree + 1] = { text = "Tags", value = "Tags" }
-	navigationTree[#navigationTree + 1] = { text = "Profiles", value = "Profiles" }
-	return navigationTree
+	local unitNavigation = {
+		{ text = "Player", value = "Player" },
+		{ text = "Target", value = "Target" },
+		{ text = "Target of Target", value = "TargetTarget" },
+		{ text = "Pet", value = "Pet" },
+		{ text = "Focus", value = "Focus" },
+		{ text = "Focus Target", value = "FocusTarget" },
+		{ text = "Party", value = "Party" },
+		{ text = "Raid", value = "Raid" },
+	}
+	if UUF:IsAugmentationEvoker() then unitNavigation[#unitNavigation + 1] = { text = "Augmentation", value = "Augmentation" } end
+	unitNavigation[#unitNavigation + 1] = { text = "Boss", value = "Boss" }
+	return {
+		{ text = "General", value = "General" },
+		{text = "Global", value = "Global", children = {
+			{text = "Toggles", value = "GlobalToggles"},
+			{text = "Fonts", value = "GlobalFonts"},
+			{text = "Textures", value = "GlobalTextures"},
+			{text = "Range", value = "GlobalRange"},
+			{text = "Tag Settings", value = "GlobalTags"},
+			{text = "Cooldown Text", value = "CooldownText"},
+		}},
+		{text = "Units", value = "Units", children = unitNavigation},
+		{ text = "Tags", value = "Tags" },
+		{ text = "Profiles", value = "Profiles" },
+	}
 end
 
 local function CreateUIScaleSettings(containerParent)
@@ -4034,11 +4041,8 @@ local function CreateCooldownTextSettings(containerParent)
     BreakpointContainer:AddChild(BreakpointTabs)
 end
 
-local function CreateGlobalSettings(containerParent)
-
-    local GlobalContainer = GUIWidgets.CreateInlineGroup(containerParent, "Global Settings")
-
-    local ToggleContainer = GUIWidgets.CreateInlineGroup(GlobalContainer, "Toggles")
+local function CreateGlobalToggleSettings(containerParent)
+    local ToggleContainer = GUIWidgets.CreateInlineGroup(containerParent, "Toggles")
 
     local ApplyColours = AG:Create("Button")
     ApplyColours:SetText("Colour Mode")
@@ -4072,12 +4076,10 @@ local function CreateGlobalSettings(containerParent)
     DisplayLoginMessageToggle:SetCallback("OnValueChanged", function(_, _, value) UUF.db.global.DisplayLoginMessage = value end)
     DisplayLoginMessageToggle:SetRelativeWidth(0.33)
     ToggleContainer:AddChild(DisplayLoginMessageToggle)
+end
 
-    CreateFontSettings(GlobalContainer)
-    CreateTextureSettings(GlobalContainer)
-    CreateRangeSettings(GlobalContainer)
-
-    local TagContainer = GUIWidgets.CreateInlineGroup(GlobalContainer, "Tag Settings")
+local function CreateGlobalTagSettings(containerParent)
+    local TagContainer = GUIWidgets.CreateInlineGroup(containerParent, "Tag Settings")
 
     local UseCustomAbbreviationsCheckbox = AG:Create("CheckBox")
     UseCustomAbbreviationsCheckbox:SetLabel("Custom Abbreviations")
@@ -4121,8 +4123,6 @@ local function CreateGlobalSettings(containerParent)
     end)
     ToTSeparatorDropdown:SetCallback("OnLeave", function() GameTooltip:Hide() end)
     TagContainer:AddChild(ToTSeparatorDropdown)
-
-    containerParent:DoLayout()
 end
 
 local function CreateUnitSettings(containerParent, unit)
@@ -4576,6 +4576,8 @@ function UUF:CreateGUI()
 
     local function SelectTab(GUIContainer, _, MainTab)
 		MainTab = MainTab:match("[^\001]+$")
+		if MainTab == "Global" then GUIContainer:SelectByValue("Global\001GlobalToggles") return end
+		if MainTab == "Units" then GUIContainer:SelectByValue("Units\001Player") return end
 		GUIContainer:ReleaseChildren()
 		UUF:ForEachUnitDB(function(_, unit) DisableAurasTestMode(unit) end)
 
@@ -4628,10 +4630,34 @@ function UUF:CreateGUI()
             SupportMeContainer:AddChild(GithubInteractive)
 
             ScrollFrame:DoLayout()
-        elseif MainTab == "Global" then
+        elseif MainTab == "GlobalToggles" then
             local ScrollFrame = GUIWidgets.CreateScrollFrame(Wrapper)
 
-            CreateGlobalSettings(ScrollFrame)
+            CreateGlobalToggleSettings(ScrollFrame)
+
+            ScrollFrame:DoLayout()
+        elseif MainTab == "GlobalFonts" then
+            local ScrollFrame = GUIWidgets.CreateScrollFrame(Wrapper)
+
+            CreateFontSettings(ScrollFrame)
+
+            ScrollFrame:DoLayout()
+        elseif MainTab == "GlobalTextures" then
+            local ScrollFrame = GUIWidgets.CreateScrollFrame(Wrapper)
+
+            CreateTextureSettings(ScrollFrame)
+
+            ScrollFrame:DoLayout()
+        elseif MainTab == "GlobalRange" then
+            local ScrollFrame = GUIWidgets.CreateScrollFrame(Wrapper)
+
+            CreateRangeSettings(ScrollFrame)
+
+            ScrollFrame:DoLayout()
+        elseif MainTab == "GlobalTags" then
+            local ScrollFrame = GUIWidgets.CreateScrollFrame(Wrapper)
+
+            CreateGlobalTagSettings(ScrollFrame)
 
             ScrollFrame:DoLayout()
         elseif MainTab == "CooldownText" then
@@ -4750,7 +4776,7 @@ function UUF:OpenGUIToUnit(unit)
 	if not lastSelectedUnitTabs[unit] then lastSelectedUnitTabs[unit] = {} end
 	lastSelectedUnitTabs[unit].mainTab = "Frame"
     UUF:CreateGUI()
-	if UUFGUI.MainNavigation then UUFGUI.MainNavigation:SelectByValue(unit == "augmentation" and "Raid\001Augmentation" or unit == "targettarget" and "TargetTarget" or unit == "focustarget" and "FocusTarget" or unit:gsub("^%l", string.upper)) end
+	if UUFGUI.MainNavigation then UUFGUI.MainNavigation:SelectByValue("Units\001" .. (unit == "augmentation" and "Augmentation" or unit == "targettarget" and "TargetTarget" or unit == "focustarget" and "FocusTarget" or unit:gsub("^%l", string.upper))) end
 end
 
 function UUFG:OpenUUFGUI()

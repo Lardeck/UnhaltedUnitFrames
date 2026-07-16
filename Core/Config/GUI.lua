@@ -3577,7 +3577,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraSlot, refre
     GUIWidgets.CreateHeader(LayoutContainer, "Layout")
 
     local NumAurasSlider = AG:Create("Slider")
-    NumAurasSlider:SetLabel(auraTitle .. " Per Filter")
+    NumAurasSlider:SetLabel(auraTitle .. " Limit")
     NumAurasSlider:SetValue(AuraDB.Num)
     NumAurasSlider:SetSliderValues(1, 24, 1)
     NumAurasSlider:SetRelativeWidth(0.5)

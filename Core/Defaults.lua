@@ -14,7 +14,7 @@ local Defaults = {
             ToTSeparator = "»",
             UseCustomAbbreviations = true,
             UIScale = {
-                Enabled = true,
+                Enabled = false,
                 Scale = 0.53333333333333,
             },
             Textures = {

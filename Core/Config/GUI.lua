@@ -3724,10 +3724,10 @@ local function CreateAuraSettings(containerParent, unit, refreshScrollFrame)
 		managerParent:AddChild(DeleteButton)
 
 		local ContainerTree = AG:Create("TreeGroup")
-		ContainerTree:SetLayout("Flow")
+		ContainerTree:SetLayout("Fill")
 		ContainerTree:SetFullWidth(true)
 		ContainerTree:SetAutoAdjustHeight(false)
-		ContainerTree:SetHeight(500)
+		ContainerTree:SetHeight(350)
 		ContainerTree:SetTreeWidth(200, false)
 		managerParent:AddChild(ContainerTree)
 
@@ -3746,7 +3746,11 @@ local function CreateAuraSettings(containerParent, unit, refreshScrollFrame)
 		local function RefreshSelectedContainer()
 			ContainerTree:ReleaseChildren()
 			DeleteButton:SetDisabled(not selectedContainer)
-			if selectedContainer and AurasDB.Containers[selectedContainer] then CreateSpecificAuraSettings(ContainerTree, unit, selectedContainer, RefreshSelectedContainer, RefreshTree) end
+			if selectedContainer and AurasDB.Containers[selectedContainer] then
+				local OptionsScrollFrame = GUIWidgets.CreateScrollFrame(ContainerTree)
+				CreateSpecificAuraSettings(OptionsScrollFrame, unit, selectedContainer, RefreshSelectedContainer, RefreshTree)
+				OptionsScrollFrame:DoLayout()
+			end
 			ContainerTree:DoLayout()
 			managerParent:DoLayout()
 			containerParent:DoLayout()
@@ -4107,6 +4111,9 @@ local function CreateUnitSettings(containerParent, unit)
     local function SelectUnitTab(SubContainer, _, UnitTab)
         if not lastSelectedUnitTabs[unit] then lastSelectedUnitTabs[unit] = {} end
         lastSelectedUnitTabs[unit].mainTab = UnitTab
+		containerParent.UUFDisableScroll = UnitTab == "Auras"
+		containerParent.scrollframe:EnableMouseWheel(UnitTab ~= "Auras")
+		if UnitTab == "Auras" then containerParent:SetScroll(0) end
         SubContainer:ReleaseChildren()
         if UnitTab == "Frame" then
             CreateFrameSettings(SubContainer, unit, GetUnitDB(unit).Frame.AnchorParent and true or false, function(element) UpdateUnitSettings(unit, function() UUF:UpdateUnitFrame(UUF[unit:upper()], unit) end, element) end)

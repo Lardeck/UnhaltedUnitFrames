@@ -21,3 +21,5 @@
 - Heal Absorbs will reverse grow when selecting `Attach to Missing Health`.
 - Added `Unhalted Unit Frames` to Main Menu.
 - Added `Interrupt on Cooldown` Colour for Cast Bars.
+- Auras: Added an option to anchor auras to `Unit Frame` or `Health Bar`.
+- Defaults: Updated to be more inline with my layout.

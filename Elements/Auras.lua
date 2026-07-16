@@ -181,18 +181,9 @@ local function UpdateAuraContainer(container, unitFrame, unit, auraKey)
 	local auraType = AuraDB.Type == "Debuffs" and "HARMFUL" or "HELPFUL"
 	local hasSpellIDs = next(AuraDB.SpellIDs)
 	local candidateFilters = hasSpellIDs and {includeSpellIDs = AuraDB.SpellIDs} or nil
-	local sizeChanged = state.Size ~= AuraDB.Size
 	state.Size = AuraDB.Size
 	container.size = AuraDB.Size
-	if sizeChanged then
-		local CooldownTextDB = UUF.db.profile.General.CooldownText
-		if CooldownTextDB.Advanced then CooldownTextDB = UUF:GetUnitDB(unitFrame, unit).Auras.AuraDuration end
-		local fontSize = CooldownTextDB.ScaleByIconSize and math.max(CooldownTextDB.FontSize * state.Size / 36, 1) or CooldownTextDB.FontSize
-		for _, button in ipairs(state.Buttons) do
-			button:SetSize(state.Size, state.Size)
-			ApplyFontStyle(button.Time, button, CooldownTextDB.Layout, fontSize)
-		end
-	end
+	for _, button in ipairs(state.Buttons) do ApplyAuraButtonStyle(button, unitFrame, unit, auraKey, state.Size) end
 	local filters, playerTokens, otherTokens, showAllPlayer, showAllOthers = GetAuraFilters(AuraDB, auraType)
 	local hasAuraFilters = #filters > 0
 	local activeSpellIDGroups = {}

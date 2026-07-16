@@ -716,23 +716,22 @@ function UUF:UpdateHealthBarLayout(unitFrame, unit)
 end
 
 
-UUF.AURA_CONTAINER_SLOTS = {
-	{Key = "TOPLEFT", Title = "Top Left", Layout = {"BOTTOMLEFT", "TOPLEFT", 0, 0}, GrowthDirection = "RIGHT"},
-	{Key = "TOP", Title = "Top", Layout = {"BOTTOM", "TOP", 0, 0}, GrowthDirection = "RIGHT"},
-	{Key = "TOPRIGHT", Title = "Top Right", Layout = {"BOTTOMRIGHT", "TOPRIGHT", 0, 0}, GrowthDirection = "LEFT"},
-	{Key = "LEFT", Title = "Left", Layout = {"RIGHT", "LEFT", 0, 0}, GrowthDirection = "LEFT"},
-	{Key = "CENTER", Title = "Center", Layout = {"CENTER", "CENTER", 0, 0}, GrowthDirection = "RIGHT"},
-	{Key = "RIGHT", Title = "Right", Layout = {"LEFT", "RIGHT", 0, 0}, GrowthDirection = "RIGHT"},
-	{Key = "BOTTOMLEFT", Title = "Bottom Left", Layout = {"TOPLEFT", "BOTTOMLEFT", 0, 0}, GrowthDirection = "RIGHT"},
-	{Key = "BOTTOM", Title = "Bottom", Layout = {"TOP", "BOTTOM", 0, 0}, GrowthDirection = "RIGHT"},
-	{Key = "BOTTOMRIGHT", Title = "Bottom Right", Layout = {"TOPRIGHT", "BOTTOMRIGHT", 0, 0}, GrowthDirection = "LEFT"},
-}
+UUF.MAX_AURA_CONTAINERS = 10
 
-UUF.AURA_CONTAINER_SLOT_NAMES = {}
-UUF.AURA_CONTAINER_SLOT_SETTINGS = {}
-for _, slot in ipairs(UUF.AURA_CONTAINER_SLOTS) do
-	UUF.AURA_CONTAINER_SLOT_NAMES[slot.Key] = slot.Title
-	UUF.AURA_CONTAINER_SLOT_SETTINGS[slot.Key] = slot
+function UUF:GetAuraContainerKeys(AurasDB)
+	local containerKeys = {}
+	for containerKey, ContainerDB in pairs(AurasDB and AurasDB.Containers or {}) do
+		if type(containerKey) == "string" and type(ContainerDB) == "table" then containerKeys[#containerKeys + 1] = containerKey end
+	end
+	table.sort(containerKeys, function(firstKey, secondKey)
+		local firstIndex = tonumber(firstKey:match("^Container #(%d+)$"))
+		local secondIndex = tonumber(secondKey:match("^Container #(%d+)$"))
+		if firstIndex and secondIndex then return firstIndex < secondIndex end
+		if firstIndex or secondIndex then return firstIndex ~= nil end
+		local firstLower, secondLower = firstKey:lower(), secondKey:lower()
+		return firstLower == secondLower and firstKey < secondKey or firstLower < secondLower
+	end)
+	return containerKeys
 end
 
 UUF.AURA_FILTERS = {
@@ -743,8 +742,8 @@ UUF.AURA_FILTERS = {
 	{Key = "DispellablePlayer", Token = "DISPELLABLE", Source = "PLAYER", Group = "Player (You)", Title = "Dispellable", Desc = "Auras that are dispellable, whether or not the player's raid can dispel them."},
 	{Key = "ImportantPlayer", Token = "IMPORTANT", Source = "PLAYER", Group = "Player (You)", Title = "Important", Desc = "Auras flagged as important, including helpful auras shown on enemy nameplates even when they are not stealable."},
 	{Key = "CrowdControlPlayer", Token = "CROWD_CONTROL", Source = "PLAYER", Group = "Player (You)", Title = "Crowd Control", Desc = "Auras with a crowd-control effect, such as a stun or fear."},
-	{Key = "BigDefensivePlayer", Token = "BIG_DEFENSIVE", Source = "PLAYER", Group = "Player (You)", Title = "Big Defensive", Desc = "Auras categorized as big defensives."},
-	{Key = "ExternalDefensivePlayer", Token = "EXTERNAL_DEFENSIVE", Source = "PLAYER", Group = "Player (You)", Title = "External Defensive", Desc = "Auras categorized as external defensives."},
+	{Key = "BigDefensivePlayer", Token = "BIG_DEFENSIVE", Source = "PLAYER", Group = "Player (You)", Title = "Big Defensive", TreeTitle = "Big Defensives", Desc = "Auras categorized as big defensives."},
+	{Key = "ExternalDefensivePlayer", Token = "EXTERNAL_DEFENSIVE", Source = "PLAYER", Group = "Player (You)", Title = "External Defensive", TreeTitle = "External Defensives", Desc = "Auras categorized as external defensives."},
 	{Key = "CancelablePlayer", Token = "CANCELABLE", Source = "PLAYER", Group = "Player (You)", Title = "Cancelable", Desc = "Auras the player can cancel."},
 	{Key = "NotCancelablePlayer", Token = "!CANCELABLE", Source = "PLAYER", Group = "Player (You)", Title = "Not Cancelable", Desc = "Auras the player cannot cancel."},
 	{Key = "Others", Source = "!PLAYER", Group = "Others (Not You)", Title = "All", Desc = "Only auras not cast by the player, their pet, or their vehicle."},
@@ -754,8 +753,8 @@ UUF.AURA_FILTERS = {
 	{Key = "Dispellable", Token = "DISPELLABLE", Source = "!PLAYER", Group = "Others (Not You)", Title = "Dispellable", Desc = "Auras that are dispellable, whether or not the player's raid can dispel them."},
 	{Key = "Important", Token = "IMPORTANT", Source = "!PLAYER", Group = "Others (Not You)", Title = "Important", Desc = "Auras flagged as important, including helpful auras shown on enemy nameplates even when they are not stealable."},
 	{Key = "CrowdControl", Token = "CROWD_CONTROL", Source = "!PLAYER", Group = "Others (Not You)", Title = "Crowd Control", Desc = "Auras with a crowd-control effect, such as a stun or fear."},
-	{Key = "BigDefensive", Token = "BIG_DEFENSIVE", Source = "!PLAYER", Group = "Others (Not You)", Title = "Big Defensive", Desc = "Auras categorized as big defensives."},
-	{Key = "ExternalDefensive", Token = "EXTERNAL_DEFENSIVE", Source = "!PLAYER", Group = "Others (Not You)", Title = "External Defensive", Desc = "Auras categorized as external defensives."},
+	{Key = "BigDefensive", Token = "BIG_DEFENSIVE", Source = "!PLAYER", Group = "Others (Not You)", Title = "Big Defensive", TreeTitle = "Big Defensives", Desc = "Auras categorized as big defensives."},
+	{Key = "ExternalDefensive", Token = "EXTERNAL_DEFENSIVE", Source = "!PLAYER", Group = "Others (Not You)", Title = "External Defensive", TreeTitle = "External Defensives", Desc = "Auras categorized as external defensives."},
 	{Key = "Cancelable", Token = "CANCELABLE", Source = "!PLAYER", Group = "Others (Not You)", Title = "Cancelable", Desc = "Auras the player can cancel."},
 	{Key = "NotCancelable", Token = "!CANCELABLE", Source = "!PLAYER", Group = "Others (Not You)", Title = "Not Cancelable", Desc = "Auras the player cannot cancel."},
 }

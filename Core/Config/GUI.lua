@@ -3359,14 +3359,29 @@ local function CreateTagsSettings(containerParent, unit)
     containerParent:DoLayout()
 end
 
-local function CreateSpecificAuraSettings(containerParent, unit, auraSlot, refreshSettings)
-    local AuraDB = GetUnitDB(unit).Auras.Containers[auraSlot]
+local function GetAuraContainerTreeLabel(auraKey, AuraDB)
+	local filterNames = {}
+	local configuredNames = {}
+	for _, filter in ipairs(UUF.AURA_FILTERS) do
+		if AuraDB.Filters[filter.Key] then
+			local filterName = filter.TreeTitle or filter.Title
+			if not configuredNames[filterName] then
+				configuredNames[filterName] = true
+				filterNames[#filterNames + 1] = filterName
+			end
+		end
+	end
+	return #filterNames > 0 and AuraDB.Type .. " - " .. table.concat(filterNames, ", ") or auraKey
+end
+
+local function CreateSpecificAuraSettings(containerParent, unit, auraKey, refreshSettings, refreshTree)
+    local AuraDB = GetUnitDB(unit).Auras.Containers[auraKey]
     local auraTitle = AuraDB.Type
     local function UpdateAuras()
         UpdateUnitSettings(unit, function() UUF:UpdateUnitAuras(UUF[unit:upper()], unit) end, "Auras")
     end
 
-    local AuraContainer = GUIWidgets.CreateInlineGroup(containerParent, UUF.AURA_CONTAINER_SLOT_NAMES[auraSlot] .. " — " .. auraTitle)
+    local AuraContainer = GUIWidgets.CreateInlineGroup(containerParent, GetAuraContainerTreeLabel(auraKey, AuraDB))
     local TypeDropdown = AG:Create("Dropdown")
     TypeDropdown:SetList({["Buffs"] = "Buffs", ["Debuffs"] = "Debuffs"}, {"Buffs", "Debuffs"})
     TypeDropdown:SetLabel("Container Type")
@@ -3375,6 +3390,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraSlot, refre
     TypeDropdown:SetCallback("OnValueChanged", function(_, _, value)
         AuraDB.Type = value
         UpdateAuras()
+		refreshTree()
 		refreshSettings()
     end)
     AuraContainer:AddChild(TypeDropdown)
@@ -3419,7 +3435,7 @@ local function CreateSpecificAuraSettings(containerParent, unit, auraSlot, refre
         FilterDropdown:SetList(filterList, filterOrder)
         for _, filterKey in ipairs(filterOrder) do FilterDropdown:SetItemValue(filterKey, AuraDB.Filters[filterKey] or false) end
         FilterDropdown:SetRelativeWidth(0.5)
-        FilterDropdown:SetCallback("OnValueChanged", function(_, _, filterKey, value) AuraDB.Filters[filterKey] = value or nil UpdateAuras() end)
+        FilterDropdown:SetCallback("OnValueChanged", function(_, _, filterKey, value) AuraDB.Filters[filterKey] = value or nil AuraContainer:SetTitle("|cFFFFFFFF" .. GetAuraContainerTreeLabel(auraKey, AuraDB) .. "|r") UpdateAuras() refreshTree() end)
         for _, dropdownItem in FilterDropdown.pullout:IterateItems() do
             local desc = filterDescriptions[dropdownItem.userdata and dropdownItem.userdata.value]
             if desc then
@@ -3693,87 +3709,86 @@ local function CreateAuraSettings(containerParent, unit, refreshScrollFrame)
     containerParent:AddChild(FrameStrataDropdown)
 
     local function CreateAuraContainerManager(managerParent)
-        local selectedSlot = GetSavedSubTab(unit, "AuraContainerSlot", "TOPLEFT")
-        if not UUF.AURA_CONTAINER_SLOT_NAMES[selectedSlot] then selectedSlot = "TOPLEFT" end
-        local AnchorSelector = AG:Create("UUFAnchorButtons")
-        local SettingsContainer = AG:Create("SimpleGroup")
-        SettingsContainer:SetLayout("Flow")
-        SettingsContainer:SetFullWidth(true)
+		local selectedContainer = GetSavedSubTab(unit, "AuraContainer", nil)
+		if not AurasDB.Containers[selectedContainer] then selectedContainer = nil end
 
-        local function UpdateAuras()
-            UpdateUnitSettings(unit, function() UUF:UpdateUnitAuras(UUF[unit:upper()], unit) end, "Auras")
-        end
+		local CreateButton = AG:Create("Button")
+		CreateButton:SetText("Create Aura Container")
+		CreateButton:SetRelativeWidth(0.5)
+		managerParent:AddChild(CreateButton)
 
-        local function RefreshSelectedContainer()
-            SettingsContainer:ReleaseChildren()
-            AnchorSelector:SetConfiguredSlots(AurasDB.Containers)
-            AnchorSelector:SetValue(selectedSlot)
-            local AuraDB = AurasDB.Containers[selectedSlot]
-            if AuraDB then
-                local DeleteButton = AG:Create("Button")
-                DeleteButton:SetText("Delete " .. UUF.AURA_CONTAINER_SLOT_NAMES[selectedSlot] .. " Container")
-                DeleteButton:SetRelativeWidth(1)
-                DeleteButton:SetCallback("OnClick", function()
-					local slotToDelete = selectedSlot
-					UUF:CreatePrompt("Delete Aura Container", "Delete the |cFF8080FF" .. UUF.AURA_CONTAINER_SLOT_NAMES[slotToDelete] .. "|r aura container and all of its settings?", function()
-						AurasDB.Containers[slotToDelete] = nil
-						UpdateAuras()
-						RefreshSelectedContainer()
-					end, nil, "Delete")
-                end)
-                SettingsContainer:AddChild(DeleteButton)
-                CreateSpecificAuraSettings(SettingsContainer, unit, selectedSlot, RefreshSelectedContainer)
-            else
-                for _, auraType in ipairs({"Buffs", "Debuffs"}) do
-					local containerType = auraType
-                    local CreateButton = AG:Create("Button")
-                    CreateButton:SetText("Create " .. containerType .. " Container")
-                    CreateButton:SetRelativeWidth(0.5)
-					CreateButton:SetCallback("OnClick", function()
-                        local source
-						for _, slot in ipairs(UUF.AURA_CONTAINER_SLOTS) do
-							local ContainerDB = AurasDB.Containers[slot.Key]
-							if ContainerDB and ContainerDB.Type == containerType then source = ContainerDB break end
-						end
-						local SlotDB = UUF.AURA_CONTAINER_SLOT_SETTINGS[selectedSlot]
-						local ContainerDB = {}
-						if source then UUF:CopyTable(source, ContainerDB) end
-						ContainerDB.Type = containerType
-						ContainerDB.AnchorParent = ContainerDB.AnchorParent or "Frame"
-						ContainerDB.Size = ContainerDB.Size or 32
-						ContainerDB.Layout = {SlotDB.Layout[1], SlotDB.Layout[2], SlotDB.Layout[3], SlotDB.Layout[4], ContainerDB.Layout and ContainerDB.Layout[5] or 1}
-						ContainerDB.Num = ContainerDB.Num or 6
-						ContainerDB.Wrap = ContainerDB.Wrap or 6
-						ContainerDB.GrowthDirection = SlotDB.GrowthDirection
-						ContainerDB.WrapDirection = selectedSlot:find("TOP") and "UP" or "DOWN"
-						ContainerDB.ShowType = ContainerDB.ShowType or false
-						ContainerDB.Sorting = ContainerDB.Sorting or "BLIZZARD"
-						ContainerDB.SpellIDs = {}
-						ContainerDB.Filters = {}
-						ContainerDB.Count = ContainerDB.Count or {HideStacks = false, Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2}, FontSize = 12, Colour = {1, 1, 1, 1}}
-						AurasDB.Containers[selectedSlot] = ContainerDB
-                        UpdateAuras()
-                        RefreshSelectedContainer()
-                    end)
-                    SettingsContainer:AddChild(CreateButton)
-                end
-            end
-            managerParent:DoLayout()
-            containerParent:DoLayout()
+		local DeleteButton = AG:Create("Button")
+		DeleteButton:SetText("Delete Aura Container")
+		DeleteButton:SetRelativeWidth(0.5)
+		DeleteButton:SetDisabled(not selectedContainer)
+		managerParent:AddChild(DeleteButton)
+
+		local ContainerTree = AG:Create("TreeGroup")
+		ContainerTree:SetLayout("Flow")
+		ContainerTree:SetFullWidth(true)
+		ContainerTree:SetAutoAdjustHeight(false)
+		ContainerTree:SetHeight(500)
+		ContainerTree:SetTreeWidth(200, false)
+		managerParent:AddChild(ContainerTree)
+
+		local function UpdateAuras()
+			UpdateUnitSettings(unit, function() UUF:UpdateUnitAuras(UUF[unit:upper()], unit) end, "Auras")
+		end
+
+		local function RefreshTree()
+			local containerTree = {}
+			local containerKeys = UUF:GetAuraContainerKeys(AurasDB)
+			for _, containerKey in ipairs(containerKeys) do containerTree[#containerTree + 1] = {text = GetAuraContainerTreeLabel(containerKey, AurasDB.Containers[containerKey]), value = containerKey} end
+			ContainerTree:SetTree(containerTree)
+			CreateButton:SetDisabled(#containerKeys >= UUF.MAX_AURA_CONTAINERS)
+		end
+
+		local function RefreshSelectedContainer()
+			ContainerTree:ReleaseChildren()
+			DeleteButton:SetDisabled(not selectedContainer)
+			if selectedContainer and AurasDB.Containers[selectedContainer] then CreateSpecificAuraSettings(ContainerTree, unit, selectedContainer, RefreshSelectedContainer, RefreshTree) end
+			ContainerTree:DoLayout()
+			managerParent:DoLayout()
+			containerParent:DoLayout()
 			refreshScrollFrame()
-        end
+		end
 
-        AnchorSelector:SetLabel("Aura Container Slots & Initial Anchors")
-        AnchorSelector:SetConfiguredSlots(AurasDB.Containers)
-        AnchorSelector:SetValue(selectedSlot)
-        AnchorSelector:SetCallback("OnValueChanged", function(_, _, value)
-            selectedSlot = value
-            SaveSubTab(unit, "AuraContainerSlot", value)
-            RefreshSelectedContainer()
-        end)
-        managerParent:AddChild(AnchorSelector)
-        managerParent:AddChild(SettingsContainer)
-        RefreshSelectedContainer()
+		ContainerTree:SetCallback("OnGroupSelected", function(_, _, value)
+			selectedContainer = value
+			SaveSubTab(unit, "AuraContainer", value)
+			RefreshSelectedContainer()
+		end)
+
+		CreateButton:SetCallback("OnClick", function()
+			if #UUF:GetAuraContainerKeys(AurasDB) >= UUF.MAX_AURA_CONTAINERS then return end
+			local containerIndex = 1
+			local containerKey = "Container #" .. containerIndex
+			while AurasDB.Containers[containerKey] do containerIndex = containerIndex + 1 containerKey = "Container #" .. containerIndex end
+			local ContainerDB = {}
+			UUF:CopyTable(GetDefaultUnitDB(unit).Auras.Container, ContainerDB)
+			AurasDB.Containers[containerKey] = ContainerDB
+			selectedContainer = containerKey
+			UpdateAuras()
+			RefreshTree()
+			ContainerTree:SelectByValue(containerKey)
+		end)
+
+		DeleteButton:SetCallback("OnClick", function()
+			if not selectedContainer or not AurasDB.Containers[selectedContainer] then return end
+			local containerToDelete = selectedContainer
+			local containerLabel = GetAuraContainerTreeLabel(containerToDelete, AurasDB.Containers[containerToDelete])
+			UUF:CreatePrompt("Delete Aura Container", "Delete |cFF8080FF" .. containerLabel .. "|r and all of its settings?", function()
+				AurasDB.Containers[containerToDelete] = nil
+				selectedContainer = nil
+				SaveSubTab(unit, "AuraContainer", nil)
+				UpdateAuras()
+				RefreshTree()
+				RefreshSelectedContainer()
+			end, nil, "Delete")
+		end)
+
+		RefreshTree()
+		if selectedContainer and AurasDB.Containers[selectedContainer] then ContainerTree:SelectByValue(selectedContainer) else selectedContainer = nil SaveSubTab(unit, "AuraContainer", nil) RefreshSelectedContainer() end
     end
 
     CreateAuraContainerManager(containerParent)

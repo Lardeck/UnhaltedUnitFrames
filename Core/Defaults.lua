@@ -283,67 +283,27 @@ local Defaults = {
                         FontSize = 12,
                         ScaleByIconSize = false,
                     },
-                    Buffs = {
-						AnchorParent = "Frame",
-                        Enabled = true,
-                        OnlyShowPlayer = false,
-                        Size = 42,
-                        Layout = {"RIGHT", "LEFT", -1, 0, 1},
-                        Num = 3,
-                        Wrap = 3,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HELPFUL",
-                        Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Debuffs = {
-						AnchorParent = "Frame",
-                        Enabled = true,
-                        OnlyShowPlayer = false,
-                        Size = 48,
-                        Layout = {"BOTTOMRIGHT", "TOPRIGHT", 0, 83, 1},
+                    Container = {
+                        AnchorParent = "Frame",
+                        Size = 32,
+                        Layout = {"BOTTOMLEFT", "TOPLEFT", 0, 1, 1},
                         Num = 6,
                         Wrap = 6,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
+                        GrowthDirection = "RIGHT",
+                        WrapDirection = "DOWN",
                         ShowType = false,
-                        Filter = "HARMFUL",
                         Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Custom = {
-						AnchorParent = "Frame",
-                        Enabled = false,
                         Type = "Buffs",
-                        OnlyShowPlayer = false,
-                        Size = 42,
-                        Layout = {"RIGHT", "LEFT", -1, 0, 1},
-                        Num = 3,
-                        Wrap = 3,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HELPFUL",
-                        Sorting = "BLIZZARD",
+                        SpellIDs = {},
+                        Filters = {},
                         Count = {
                             HideStacks = false,
                             Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
                             FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
+                            Colour = {1, 1, 1, 1},
+                        },
                     },
+                    Containers = {},
                 },
                 Tags = {
                     TagOne = {
@@ -545,67 +505,27 @@ local Defaults = {
                         FontSize = 12,
                         ScaleByIconSize = false,
                     },
-                    Buffs = {
-						AnchorParent = "Frame",
-                        Enabled = true,
-                        OnlyShowPlayer = false,
-                        Size = 38,
+                    Container = {
+                        AnchorParent = "Frame",
+                        Size = 32,
                         Layout = {"BOTTOMLEFT", "TOPLEFT", 0, 1, 1},
-                        Num = 7,
-                        Wrap = 7,
+                        Num = 6,
+                        Wrap = 6,
                         GrowthDirection = "RIGHT",
-                        WrapDirection = "UP",
+                        WrapDirection = "DOWN",
                         ShowType = false,
-                        Filter = "HELPFUL",
                         Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Debuffs = {
-						AnchorParent = "Frame",
-                        Enabled = false,
-                        OnlyShowPlayer = false,
-                        Size = 34,
-                        Layout = {"BOTTOMRIGHT", "TOPRIGHT", 0, 1, 1},
-                        Num = 4,
-                        Wrap = 4,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HARMFUL",
-                        Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Custom = {
-						AnchorParent = "Frame",
-                        Enabled = false,
                         Type = "Buffs",
-                        OnlyShowPlayer = false,
-                        Size = 42,
-                        Layout = {"RIGHT", "LEFT", -1, 0, 1},
-                        Num = 3,
-                        Wrap = 3,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HELPFUL",
-                        Sorting = "BLIZZARD",
+                        SpellIDs = {},
+                        Filters = {},
                         Count = {
                             HideStacks = false,
                             Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
                             FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
+                            Colour = {1, 1, 1, 1},
+                        },
                     },
+                    Containers = {},
                 },
                 Tags = {
                     TagOne = {
@@ -736,46 +656,27 @@ local Defaults = {
                         FontSize = 12,
                         ScaleByIconSize = false,
                     },
-                    Buffs = {
-						AnchorParent = "Frame",
-                        Enabled = false,
-                        OnlyShowPlayer = false,
-                        Size = 22,
-                        Layout = {"RIGHT", "LEFT", -1, 0, 1},
-                        Num = 3,
-                        Wrap = 3,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HELPFUL",
-                        Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Debuffs = {
-						AnchorParent = "Frame",
-                        Enabled = false,
-                        OnlyShowPlayer = false,
-                        Size = 22,
-                        Layout = {"LEFT", "RIGHT", 1, 0, 1},
-                        Num = 3,
-                        Wrap = 3,
+                    Container = {
+                        AnchorParent = "Frame",
+                        Size = 32,
+                        Layout = {"BOTTOMLEFT", "TOPLEFT", 0, 1, 1},
+                        Num = 6,
+                        Wrap = 6,
                         GrowthDirection = "RIGHT",
-                        WrapDirection = "UP",
+                        WrapDirection = "DOWN",
                         ShowType = false,
-                        Filter = "HARMFUL",
                         Sorting = "BLIZZARD",
+                        Type = "Buffs",
+                        SpellIDs = {},
+                        Filters = {},
                         Count = {
                             HideStacks = false,
                             Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
                             FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
+                            Colour = {1, 1, 1, 1},
+                        },
                     },
+                    Containers = {},
                 },
                 Tags = {
                     TagOne = {
@@ -949,67 +850,27 @@ local Defaults = {
                         FontSize = 12,
                         ScaleByIconSize = false,
                     },
-                    Buffs = {
-						AnchorParent = "Frame",
-                        Enabled = false,
-                        OnlyShowPlayer = false,
-                        Size = 22,
-                        Layout = {"RIGHT", "LEFT", -1, 0, 1},
-                        Num = 1,
-                        Wrap = 1,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HELPFUL",
-                        Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Debuffs = {
-						AnchorParent = "Frame",
-                        Enabled = false,
-                        OnlyShowPlayer = false,
-                        Size = 22,
-                        Layout = {"LEFT", "RIGHT", 1, 0, 1},
-                        Num = 3,
-                        Wrap = 3,
+                    Container = {
+                        AnchorParent = "Frame",
+                        Size = 32,
+                        Layout = {"BOTTOMLEFT", "TOPLEFT", 0, 1, 1},
+                        Num = 6,
+                        Wrap = 6,
                         GrowthDirection = "RIGHT",
-                        WrapDirection = "UP",
+                        WrapDirection = "DOWN",
                         ShowType = false,
-                        Filter = "HARMFUL",
                         Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Custom = {
-						AnchorParent = "Frame",
-                        Enabled = false,
                         Type = "Buffs",
-                        OnlyShowPlayer = false,
-                        Size = 22,
-                        Layout = {"RIGHT", "LEFT", -1, 0, 1},
-                        Num = 3,
-                        Wrap = 3,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HELPFUL",
-                        Sorting = "BLIZZARD",
+                        SpellIDs = {},
+                        Filters = {},
                         Count = {
                             HideStacks = false,
                             Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
                             FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
+                            Colour = {1, 1, 1, 1},
+                        },
                     },
+                    Containers = {},
                 },
                 Tags = {
                     TagOne = {
@@ -1140,46 +1001,27 @@ local Defaults = {
                         FontSize = 12,
                         ScaleByIconSize = false,
                     },
-                    Buffs = {
-						AnchorParent = "Frame",
-                        Enabled = false,
-                        OnlyShowPlayer = false,
-                        Size = 22,
-                        Layout = {"RIGHT", "LEFT", -1, 0, 1},
-                        Num = 3,
-                        Wrap = 3,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HELPFUL",
-                        Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Debuffs = {
-						AnchorParent = "Frame",
-                        Enabled = false,
-                        OnlyShowPlayer = false,
-                        Size = 22,
-                        Layout = {"LEFT", "RIGHT", 1, 0, 1},
-                        Num = 3,
-                        Wrap = 3,
+                    Container = {
+                        AnchorParent = "Frame",
+                        Size = 32,
+                        Layout = {"BOTTOMLEFT", "TOPLEFT", 0, 1, 1},
+                        Num = 6,
+                        Wrap = 6,
                         GrowthDirection = "RIGHT",
-                        WrapDirection = "UP",
+                        WrapDirection = "DOWN",
                         ShowType = false,
-                        Filter = "HARMFUL",
                         Sorting = "BLIZZARD",
+                        Type = "Buffs",
+                        SpellIDs = {},
+                        Filters = {},
                         Count = {
                             HideStacks = false,
                             Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
                             FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
+                            Colour = {1, 1, 1, 1},
+                        },
                     },
+                    Containers = {},
                 },
                 Tags = {
                     TagOne = {
@@ -1349,67 +1191,27 @@ local Defaults = {
                         FontSize = 12,
                         ScaleByIconSize = false,
                     },
-                    Buffs = {
-						AnchorParent = "Frame",
-                        Enabled = false,
-                        OnlyShowPlayer = false,
-                        Size = 22,
-                        Layout = {"LEFT", "RIGHT", 1, 0, 1},
-                        Num = 1,
-                        Wrap = 1,
+                    Container = {
+                        AnchorParent = "Frame",
+                        Size = 32,
+                        Layout = {"BOTTOMLEFT", "TOPLEFT", 0, 1, 1},
+                        Num = 6,
+                        Wrap = 6,
                         GrowthDirection = "RIGHT",
-                        WrapDirection = "UP",
+                        WrapDirection = "DOWN",
                         ShowType = false,
-                        Filter = "HELPFUL",
                         Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Debuffs = {
-						AnchorParent = "Frame",
-                        Enabled = false,
-                        OnlyShowPlayer = false,
-                        Size = 22,
-                        Layout = {"RIGHT", "LEFT", -1, 0, 1},
-                        Num = 3,
-                        Wrap = 3,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HARMFUL",
-                        Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Custom = {
-						AnchorParent = "Frame",
-                        Enabled = false,
                         Type = "Buffs",
-                        OnlyShowPlayer = false,
-                        Size = 22,
-                        Layout = {"RIGHT", "LEFT", -1, 0, 1},
-                        Num = 3,
-                        Wrap = 3,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HELPFUL",
-                        Sorting = "BLIZZARD",
+                        SpellIDs = {},
+                        Filters = {},
                         Count = {
                             HideStacks = false,
                             Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
                             FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
+                            Colour = {1, 1, 1, 1},
+                        },
                     },
+                    Containers = {},
                 },
                 Tags = {
                     TagOne = {
@@ -1576,67 +1378,27 @@ local Defaults = {
                         FontSize = 12,
                         ScaleByIconSize = false,
                     },
-                    Buffs = {
-						AnchorParent = "Frame",
-                        Enabled = true,
-                        OnlyShowPlayer = false,
-                        Size = 52,
-                        Layout = {"LEFT", "RIGHT", 1, 0, 1},
-                        Num = 3,
-                        Wrap = 3,
+                    Container = {
+                        AnchorParent = "Frame",
+                        Size = 32,
+                        Layout = {"BOTTOMLEFT", "TOPLEFT", 0, 1, 1},
+                        Num = 6,
+                        Wrap = 6,
                         GrowthDirection = "RIGHT",
-                        WrapDirection = "UP",
+                        WrapDirection = "DOWN",
                         ShowType = false,
-                        Filter = "HELPFUL",
                         Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Debuffs = {
-						AnchorParent = "Frame",
-                        Enabled = false,
-                        OnlyShowPlayer = false,
-                        Size = 34,
-                        Layout = {"BOTTOMRIGHT", "TOPRIGHT", 0, 1, 1},
-                        Num = 4,
-                        Wrap = 4,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HARMFUL",
-                        Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Custom = {
-						AnchorParent = "Frame",
-                        Enabled = false,
                         Type = "Buffs",
-                        OnlyShowPlayer = false,
-                        Size = 42,
-                        Layout = {"RIGHT", "LEFT", -1, 0, 1},
-                        Num = 3,
-                        Wrap = 3,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HELPFUL",
-                        Sorting = "BLIZZARD",
+                        SpellIDs = {},
+                        Filters = {},
                         Count = {
                             HideStacks = false,
                             Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
                             FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
+                            Colour = {1, 1, 1, 1},
+                        },
                     },
+                    Containers = {},
                 },
                 Tags = {
                     TagOne = {
@@ -1805,67 +1567,27 @@ local Defaults = {
                         FontSize = 12,
                         ScaleByIconSize = false,
                     },
-                    Buffs = {
-						AnchorParent = "Health",
-                        Enabled = true,
-                        OnlyShowPlayer = false,
-                        Size = 30,
-                        Layout = {"BOTTOMLEFT", "BOTTOMLEFT", 1, 1, 1},
-                        Num = 3,
-                        Wrap = 3,
+                    Container = {
+                        AnchorParent = "Frame",
+                        Size = 32,
+                        Layout = {"BOTTOMLEFT", "TOPLEFT", 0, 1, 1},
+                        Num = 6,
+                        Wrap = 6,
                         GrowthDirection = "RIGHT",
-                        WrapDirection = "UP",
+                        WrapDirection = "DOWN",
                         ShowType = false,
-                        Filter = "HELPFUL",
                         Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Debuffs = {
-						AnchorParent = "Health",
-                        Enabled = true,
-                        OnlyShowPlayer = false,
-                        Size = 30,
-                        Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", -1, 1, 1},
-                        Num = 3,
-                        Wrap = 3,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HARMFUL",
-                        Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Custom = {
-						AnchorParent = "Frame",
-                        Enabled = false,
                         Type = "Buffs",
-                        OnlyShowPlayer = false,
-                        Size = 42,
-                        Layout = {"RIGHT", "LEFT", -1, 0, 1},
-                        Num = 3,
-                        Wrap = 3,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HELPFUL",
-                        Sorting = "BLIZZARD",
+                        SpellIDs = {},
+                        Filters = {},
                         Count = {
                             HideStacks = false,
                             Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
                             FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
+                            Colour = {1, 1, 1, 1},
+                        },
                     },
+                    Containers = {},
                 },
                 Tags = {
                     TagOne = {
@@ -2034,67 +1756,27 @@ local Defaults = {
                         FontSize = 12,
                         ScaleByIconSize = false,
                     },
-                    Buffs = {
-						AnchorParent = "Health",
-                        Enabled = true,
-                        OnlyShowPlayer = false,
-                        Size = 30,
-                        Layout = {"BOTTOMLEFT", "BOTTOMLEFT", 1, 1, 1},
-                        Num = 1,
-                        Wrap = 1,
+                    Container = {
+                        AnchorParent = "Frame",
+                        Size = 32,
+                        Layout = {"BOTTOMLEFT", "TOPLEFT", 0, 1, 1},
+                        Num = 6,
+                        Wrap = 6,
                         GrowthDirection = "RIGHT",
-                        WrapDirection = "UP",
+                        WrapDirection = "DOWN",
                         ShowType = false,
-                        Filter = "HELPFUL",
                         Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Debuffs = {
-						AnchorParent = "Health",
-                        Enabled = true,
-                        OnlyShowPlayer = false,
-                        Size = 28,
-                        Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", -1, 1, -1},
-                        Num = 2,
-                        Wrap = 2,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HARMFUL",
-                        Sorting = "BLIZZARD",
-                        Count = {
-                            HideStacks = false,
-                            Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-                            FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
-                    },
-                    Custom = {
-						AnchorParent = "Frame",
-                        Enabled = false,
                         Type = "Buffs",
-                        OnlyShowPlayer = false,
-                        Size = 42,
-                        Layout = {"RIGHT", "LEFT", -1, 0, 1},
-                        Num = 3,
-                        Wrap = 3,
-                        GrowthDirection = "LEFT",
-                        WrapDirection = "UP",
-                        ShowType = false,
-                        Filter = "HELPFUL",
-                        Sorting = "BLIZZARD",
+                        SpellIDs = {},
+                        Filters = {},
                         Count = {
                             HideStacks = false,
                             Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
                             FontSize = 12,
-                            Colour = {1, 1, 1, 1}
-                        }
+                            Colour = {1, 1, 1, 1},
+                        },
                     },
+                    Containers = {},
                 },
                 Tags = {
                     TagOne = {
@@ -2261,67 +1943,27 @@ local Defaults = {
 							FontSize = 12,
 							ScaleByIconSize = false,
 						},
-						Buffs = {
+						Container = {
 							AnchorParent = "Frame",
-							Enabled = true,
-							OnlyShowPlayer = false,
-							Size = 28,
-							Layout = {"BOTTOMLEFT", "BOTTOMLEFT", 2, 2, 1},
-							Num = 1,
-							Wrap = 1,
+							Size = 32,
+							Layout = {"BOTTOMLEFT", "TOPLEFT", 0, 1, 1},
+							Num = 6,
+							Wrap = 6,
 							GrowthDirection = "RIGHT",
-							WrapDirection = "UP",
+							WrapDirection = "DOWN",
 							ShowType = false,
-							Filter = "HELPFUL",
 							Sorting = "BLIZZARD",
-							Count = {
-								HideStacks = false,
-								Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-								FontSize = 12,
-								Colour = {1, 1, 1, 1}
-							}
-						},
-						Debuffs = {
-							AnchorParent = "Frame",
-							Enabled = false,
-							OnlyShowPlayer = false,
-							Size = 31,
-							Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", -2, 2, 1},
-							Num = 2,
-							Wrap = 2,
-							GrowthDirection = "LEFT",
-							WrapDirection = "UP",
-							ShowType = false,
-							Filter = "HARMFUL",
-							Sorting = "BLIZZARD",
-							Count = {
-								HideStacks = false,
-								Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
-								FontSize = 12,
-								Colour = {1, 1, 1, 1}
-							}
-						},
-						Custom = {
-							AnchorParent = "Frame",
-							Enabled = false,
 							Type = "Buffs",
-							OnlyShowPlayer = false,
-							Size = 42,
-							Layout = {"RIGHT", "LEFT", -1, 0, 1},
-							Num = 3,
-							Wrap = 3,
-							GrowthDirection = "LEFT",
-							WrapDirection = "UP",
-							ShowType = false,
-							Filter = "HELPFUL",
-							Sorting = "BLIZZARD",
+							SpellIDs = {},
+							Filters = {},
 							Count = {
 								HideStacks = false,
 								Layout = {"BOTTOMRIGHT", "BOTTOMRIGHT", 0, 2},
 								FontSize = 12,
-								Colour = {1, 1, 1, 1}
-							}
+								Colour = {1, 1, 1, 1},
+							},
 						},
+						Containers = {},
 					},
 					Tags = {
 						TagOne = {
@@ -2360,21 +2002,6 @@ local Defaults = {
         }
     },
 }
-
-for _, UnitDB in pairs(Defaults.profile.Units) do
-	if UnitDB.Auras then
-		UnitDB.Auras.Buffs = nil
-		UnitDB.Auras.Debuffs = nil
-		UnitDB.Auras.Custom = nil
-		UnitDB.Auras.Containers = {}
-	end
-	if UnitDB.augmentation and UnitDB.augmentation.Auras then
-		UnitDB.augmentation.Auras.Buffs = nil
-		UnitDB.augmentation.Auras.Debuffs = nil
-		UnitDB.augmentation.Auras.Custom = nil
-		UnitDB.augmentation.Auras.Containers = {}
-	end
-end
 
 ---@return table Defaults Returns the Default Table.
 function UUF:GetDefaultDB() return Defaults end

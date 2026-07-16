@@ -260,9 +260,8 @@ function UUF:UpdateUnitAuraEligibility(unitFrame, unit)
 	if not unitToken then unitToken = unit == "partyplayer" and "player" or unit end
 	local canAssist = UnitCanAssist("player", unitToken)
 	local assistabilityKnown = not UUF:IsSecretValue(canAssist)
-	for _, slot in ipairs(UUF.AURA_CONTAINER_SLOTS) do
-		local container = unitFrame.AuraContainers and unitFrame.AuraContainers[slot.Key]
-		local AuraDB = AurasDB.Containers[slot.Key]
+	for auraKey, container in pairs(unitFrame.AuraContainers or {}) do
+		local AuraDB = AurasDB.Containers[auraKey]
 		local state = container and AuraContainerState[container]
 		if AuraDB and state then
 			local auraType = AuraDB.Type == "Debuffs" and "HARMFUL" or "HELPFUL"
@@ -280,12 +279,43 @@ function UUF:UpdateUnitAuraEligibility(unitFrame, unit)
 	end
 end
 
+local function SyncAuraContainers(unitFrame, unit)
+	local AurasDB = UUF:GetUnitDB(unitFrame, unit).Auras
+	if not AurasDB then return end
+	for auraKey, container in pairs(unitFrame.AuraContainers) do
+		if not AurasDB.Containers[auraKey] then
+			UpdateAuraContainer(container, unitFrame, unit, auraKey)
+			unitFrame.AuraContainers[auraKey] = nil
+			AuraContainerState[container].AuraKey = nil
+		end
+	end
+	for _, auraKey in ipairs(UUF:GetAuraContainerKeys(AurasDB)) do
+		local container = unitFrame.AuraContainers[auraKey]
+		if not container then
+			for _, availableContainer in ipairs(unitFrame.AuraContainerPool) do
+				local state = AuraContainerState[availableContainer]
+				if not state.AuraKey then
+					container = availableContainer
+					state.AuraKey = auraKey
+					unitFrame.AuraContainers[auraKey] = container
+					break
+				end
+			end
+		end
+		if container then UpdateAuraContainer(container, unitFrame, unit, auraKey) end
+	end
+end
+
 function UUF:CreateUnitAuras(unitFrame, unit)
 	local AurasDB = UUF:GetUnitDB(unitFrame, unit).Auras
 	if not AurasDB then return end
 	unitFrame.AuraContainers = {}
+	unitFrame.AuraContainerPool = {}
 	local durationFormatter = UUF:GetCooldownDurationFormatter()
-	for _, slot in ipairs(UUF.AURA_CONTAINER_SLOTS) do unitFrame.AuraContainers[slot.Key] = CreateAuraContainer(unitFrame, unit, slot.Key, durationFormatter) end
+	for _ = 1, UUF.MAX_AURA_CONTAINERS do
+		local container = CreateAuraContainer(unitFrame, unit, nil, durationFormatter)
+		if container then unitFrame.AuraContainerPool[#unitFrame.AuraContainerPool + 1] = container end
+	end
 	AuraUnitFrames[unitFrame] = unit
 	UUF:UpdateUnitAuras(unitFrame, unit)
 end
@@ -296,7 +326,7 @@ function UUF:UpdateUnitAuras(unitFrame, unit)
 	if not AurasDB then return end
 	AuraUnitFrames[unitFrame] = unit
 	UUF:GetCooldownDurationFormatter()
-	for _, slot in ipairs(UUF.AURA_CONTAINER_SLOTS) do UpdateAuraContainer(unitFrame.AuraContainers and unitFrame.AuraContainers[slot.Key], unitFrame, unit, slot.Key) end
+	SyncAuraContainers(unitFrame, unit)
 	UUF:UpdateUnitAuraEligibility(unitFrame, unit)
 	if UUF.AURA_TEST_MODE then UUF:CreateTestAuras(unitFrame, unit) end
 end
@@ -401,9 +431,9 @@ function UUF:CreateTestAuras(unitFrame, unit)
 	if not unitFrame or not unit then return end
 	local AurasDB = UUF:GetUnitDB(unitFrame, unit).Auras
 	if UUF.AURA_TEST_MODE then
-		for _, slot in ipairs(UUF.AURA_CONTAINER_SLOTS) do
-			local AuraDB = AurasDB.Containers[slot.Key]
-			UpdateFakeAuras(unitFrame.AuraContainers and unitFrame.AuraContainers[slot.Key], unitFrame, unit, AuraDB, AuraDB and AuraDB.Type == "Debuffs" and 135768 or 135769)
+		for auraKey, container in pairs(unitFrame.AuraContainers or {}) do
+			local AuraDB = AurasDB.Containers[auraKey]
+			UpdateFakeAuras(container, unitFrame, unit, AuraDB, AuraDB and AuraDB.Type == "Debuffs" and 135768 or 135769)
 		end
 		return
 	end

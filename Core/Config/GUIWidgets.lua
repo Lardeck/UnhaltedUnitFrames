@@ -36,7 +36,7 @@ local function FixScrollFrame(widget)
 	local status = widget.status or widget.localstatus
 	local contentHeight = widget.content:GetHeight()
 	local scrollFrameHeight = widget.scrollframe:GetHeight()
-	local scrollable = not widget.UUFDisableScroll and contentHeight > scrollFrameHeight + 2
+	local scrollable = contentHeight > scrollFrameHeight + 2
 	widget.scrollBarShown = scrollable or nil
 	widget.scrollbar:SetShown(scrollable)
 	if scrollable then widget.scrollbar.ThumbTexture:SetHeight(math.max(widget.scrollbar:GetHeight() * scrollFrameHeight / contentHeight, 24)) end
@@ -74,7 +74,6 @@ end
 
 local function CreateScrollFrame(containerParent)
     local scrollFrame = AG:Create("ScrollFrame")
-	scrollFrame.UUFDisableScroll = nil
 	StyleScrollFrame(scrollFrame)
 	scrollFrame.FixScroll = FixScrollFrame
 	scrollFrame.OnWidthSet = SetScrollFrameWidth
